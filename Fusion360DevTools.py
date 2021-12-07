@@ -2,20 +2,20 @@
 # Description-Collection of useful utilities to aid in the development of a Fusion 360 Add-in.
 
 from . import commands
-from .lib.fusion360utils import cmd_utils, general_utils
+from .lib import fusion360utils as futil
 
 
 def run(context):
     try:
         commands.start()
     except:
-        general_utils.handle_error('run')
+        futil.handle_error('run')
 
 
 def stop(context):
     try:
-        cmd_utils.clear_handlers()
+        futil.clear_handlers()
         commands.stop()
 
     except:
-        general_utils.handle_error('stop')
+        futil.handle_error('stop')
