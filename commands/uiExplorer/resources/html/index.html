@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>User Interface Details</title>
+    <link href="static/themes/default/style.min.css" rel="stylesheet"/>
+    <link href="static/vendor/bootstrap-3.3.7-dist/css/bootstrap.css" rel="stylesheet">
+    <script src="static/vendor/jquery-1.11.0.min.js"></script>
+    <script src="static/vendor/jstree.js"></script>
+    <script src="static/vendor/bootstrap-3.3.7-dist/js/bootstrap.js"></script>
+    <script src="static/ui_tree.js"></script>
+    <script src="static/tree_icon_types.js"></script>
+</head>
+<body>
+<div class="col-sm-12" style="text-align:left;">
+    <div class="h3" id="pim_url_header">User Interface Details</div>
+
+    <div class="col-sm-12">
+        <div>
+            <p>
+                To see UI details for other workspaces such as Manufacture (CAM),
+                you must first activate that workspace at least once in the active document.
+            </p>
+        </div>
+    </div>
+    <div class="row" style="margin-top:10px;" id="buttons">
+        <div class="col-sm-12">
+            <button class="btn btn-success btn-sm" onclick="refresh_tree();" type="button">
+                <i class="glyphicon glyphicon-refresh"></i> Get Data
+            </button>
+            <!--            <button class="btn btn-success btn-sm" onclick="filter_tree();" type="button">-->
+            <!--                <i class="glyphicon glyphicon-filter"></i> Filter-->
+            <!--            </button>-->
+            <!--            <button class="btn btn-info btn-sm" onclick="expand_tree();" type="button">-->
+            <!--                <i class="glyphicon glyphicon-collapse-down"></i> Expand-->
+            <!--            </button>-->
+            <button class="btn btn-info btn-sm" onclick="collapse_tree();" type="button">
+                <i class="glyphicon glyphicon-collapse-up"></i> Collapse
+            </button>
+        </div>
+    </div>
+
+
+    <!--    <div class="row" style="margin-top:10px;">-->
+    <!--        <div class="col-sm-12" style="text-align:left;">-->
+    <!--            <label for="search-input">Search Tree</label>-->
+    <!--            <input class="search-input" id="search-input" onclick="this.select()" placeholder="Search"/>-->
+    <!--        </div>-->
+    <!--    </div>-->
+
+    <div id="js_tree_demo_div"></div>
+</div>
+</body>
+</html>

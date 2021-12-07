@@ -1,0 +1,13 @@
+{
+	"autodeskProduct":	"Fusion360",
+	"type":	"addin",
+	"id":	"10aaf393-0c64-4337-9099-fe77fb523ef3",
+	"author":	"Patrick Rainsberry",
+	"description":	{
+		"":	"Collection of useful utilities to aid in the development of a Fusion 360 Add-in."
+	},
+	"version":	"0.1.0",
+	"runOnStartup":	false,
+	"supportedOS":	"windows|mac",
+	"editEnabled":	true
+}
