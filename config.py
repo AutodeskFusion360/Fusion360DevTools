@@ -34,6 +34,9 @@ ui_palette_id = f'{ADDIN_NAME}_ui_palette'
 api_palette_name = 'API Explorer'
 api_palette_id = f'{ADDIN_NAME}_api_palette'
 
+appearance_palette_name = 'Appearance Explorer'
+appearance_palette_id = f'{ADDIN_NAME}_appearance_palette'
+
 # Reference for use in some commands
 all_workspace_names = [
     'FusionSolidEnvironment', 'GenerativeEnvironment', 'PCBEnvironment', 'PCB3DEnvironment', 'Package3DEnvironment',

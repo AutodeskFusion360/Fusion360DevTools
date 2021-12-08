@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Appearance Tree</title>
+    <link href="static/themes/default/style.min.css" rel="stylesheet"/>
+    <link href="static/vendor/bootstrap-3.3.7-dist/css/bootstrap.css" rel="stylesheet">
+    <script src="static/vendor/jquery-1.11.0.min.js"></script>
+    <script src="static/vendor/jstree.js"></script>
+    <script src="static/vendor/bootstrap-3.3.7-dist/js/bootstrap.js"></script>
+    <script src="static/appearance_tree.js"></script>
+    <script src="static/tree_icon_types.js"></script>
+</head>
+<body>
+<!--<h1 id='h1'>Appearance Tree</h1>-->
+
+<div class="panel-group">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h4 class="panel-title">
+                <a data-toggle="collapse" href="#collapse1">Appearance Tree Info</a>
+            </h4>
+        </div>
+        <div class="panel-collapse collapse in" id="collapse1">
+            <div class="panel-body">
+                <p id='p1'>Click the checkbox next to the appearance or material in the tree to remove it. </p>
+                <br/>
+                <p id='p2'>Pressing the refresh button will remove the appearance and refresh the tree display.</p>
+                <br/>
+                <p id='p3'>To use the search feature you may have to click in the Fusion 360 graphics window then back
+                    into the
+                    search box.</p>
+                <br/>
+                <div id="tree_messages"></div>
+            </div>
+            <div class="panel-footer">
+                <a data-toggle="collapse" href="#collapse1">
+                    <i class="glyphicon glyphicon-chevron-up"></i>Click to collapse</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row" style="margin-top:10px;">
+    <div class="col-sm-12">
+        <button class="btn btn-success btn-sm" onclick="refresh_tree();" type="button"><i
+                class="glyphicon glyphicon-refresh"></i>Refresh
+        </button>
+        <button class="btn btn-info btn-sm" onclick="expand_tree();" type="button"><i
+                class="glyphicon glyphicon-collapse-down"></i>Expand All
+        </button>
+        <button class="btn btn-info btn-sm" onclick="collapse_tree();" type="button"><i
+                class="glyphicon glyphicon-collapse-up"></i>Collapse All
+        </button>
+    </div>
+
+</div>
+
+<div class="row" style="margin-top:10px;">
+    <div class="col-sm-12" style="text-align:left;">
+        <label for="search-input">Search</label>
+        <input class="search-input" id="search-input" onclick="this.select()" placeholder="*"/>
+    </div>
+</div>
+
+<div id="appearance_tree"></div>
+</body>
+</html>

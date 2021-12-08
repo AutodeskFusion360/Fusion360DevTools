@@ -1,4 +1,5 @@
 from .apiExplorer import entry as api_explorer
+from .appearances import entry as appearance
 from .attributes import add, all, selected
 from .data import entry as data
 from .existing import entry as existing
@@ -9,7 +10,8 @@ commands = [
     data,
     api_explorer,
     ui_explorer,
-    existing
+    existing,
+    appearance
 ]
 
 

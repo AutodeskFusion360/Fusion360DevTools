@@ -9,7 +9,7 @@ from .object_explorer import get_object_tree, get_new_tree, initialize_stack, se
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_explorer'
+CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_api_explorer'
 CMD_NAME = 'API Object Explorer'
 CMD_Description = 'Explorer details of the API Object Model'
 IS_PROMOTED = True
@@ -124,25 +124,25 @@ def palette_incoming(html_args: adsk.core.HTMLEventArgs):
     if not browser_input:
         return
 
-    message_data: dict = json.loads(html_args.data)
     message_action = html_args.action
+    api_tree_data = {}
+    response_action = ''
 
     if message_action == 'go_back':
-        ui_tree = go_back()
-        message_json = json.dumps(ui_tree)
-        message_action = 'tree_refresh'
-        browser_input.sendInfoToHTML(message_action, message_json)
+        response_action = 'tree_refresh'
+        api_tree_data = go_back()
 
     elif message_action == 'pick_node':
+        message_data: dict = json.loads(html_args.data)
         if message_data['clickable']:
-            obj_tree = get_new_tree(message_data['param_name'])
-            message_action = 'tree_refresh'
+            api_tree_data = get_new_tree(message_data['param_name'])
+            response_action = 'tree_refresh'
         else:
-            obj_tree = get_end_title(message_data['param_name'])
-            message_action = 'title_refresh'
+            api_tree_data = get_end_title(message_data['param_name'])
+            response_action = 'title_refresh'
 
-        message_json = json.dumps(obj_tree)
-        browser_input.sendInfoToHTML(message_action, message_json)
+    response_data = json.dumps(api_tree_data)
+    browser_input.sendInfoToHTML(response_action, response_data)
 
 
 def command_destroy(args: adsk.core.CommandEventArgs):

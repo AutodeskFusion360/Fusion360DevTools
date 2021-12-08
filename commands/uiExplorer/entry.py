@@ -127,17 +127,14 @@ def palette_navigating(args: adsk.core.NavigationEventArgs):
 
 
 def palette_incoming(html_args: adsk.core.HTMLEventArgs):
-    message_data: dict = json.loads(html_args.data)
     message_action = html_args.action
 
-    if message_action == 'refresh_tree':
-        ui_tree = get_ui_tree()
-        message_action = 'tree_refresh'
-        message_json = json.dumps(ui_tree)
-
-        palette = ui.palettes.itemById(PALETTE_ID)
-        palette.sendInfoToHTML(message_action, message_json)
+    if message_action == 'get_tree_data':
+        ui_tree_data = get_ui_tree()
+        send_data = json.dumps(ui_tree_data)
+        html_args.returnData = send_data
 
     elif message_action == 'pick_node':
+        message_data: dict = json.loads(html_args.data)
         addin_text = make_addin_text(message_data)
         futil.log(addin_text, force_console=True)

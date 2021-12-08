@@ -1,30 +1,25 @@
+const TREE_DIV = "#js_tree_demo_div";
+
 $(document).ready(function () {
-    $("#js_tree_demo_div").jstree({
+    initialize_tree();
+    tree_clear();
+});
+
+function initialize_tree() {
+    $(TREE_DIV).jstree({
         "core": {
             "check_callback": true,
             "data": "Select Something"
         },
-        "checkbox": {
-            "three_state": true,
-            "whole_node": false,
-            "tie_selection": false
-        },
         "types": tree_icon_types,
         "plugins": ["types"],
-        // "plugins": ["checkbox", "types", "sort", "search", "contextmenu"],
-        "filter_check": "Collapse"
     }).on({
         "activate_node.jstree": function (e, data) {
             let args = get_node_data(data.node);
             adsk.fusionSendData("pick_node", JSON.stringify(args));
         },
-        "refresh.jstree": (e, data) => do_filter_check(),
-
     });
-    tree_clear();
-});
-
-
+}
 function get_node_data(node) {
     return {
         node_id: node.id,
@@ -33,16 +28,6 @@ function get_node_data(node) {
         param_name: node.original.param_name,
         clickable: node.original.clickable,
     };
-}
-
-
-function filter_tree() {
-    // alert("refresh");
-    const args = {
-        arg1: "Sample argument 1",
-        arg2: "Sample argument 2"
-    };
-    adsk.fusionSendData("filter_tree", JSON.stringify(args))
 }
 
 function go_back() {
@@ -54,25 +39,20 @@ function go_back() {
 }
 
 function expand_tree() {
-    let js_tree = $("#js_tree_demo_div").jstree(true);
+    let js_tree = $(TREE_DIV).jstree(true);
     js_tree.open_all();
     js_tree.filter_check = "Expand";
 }
 
 function collapse_tree() {
-    let js_tree = $("#js_tree_demo_div").jstree(true);
+    let js_tree = $(TREE_DIV).jstree(true);
     js_tree.close_all();
     js_tree.filter_check = "Collapse";
 }
 
 function tree_clear() {
-    let js_tree = $("#js_tree_demo_div").jstree(true);
-    let msg = "";
-    if (document.getElementById("buttons") !== null) {
-        msg = `Select something to begin exploring`;
-    } else {
-        msg = "Pick a Component to see UI data";
-    }
+    let js_tree = $(TREE_DIV).jstree(true);
+    let msg = `Select something to begin exploring`;
     js_tree.settings.core.data = [{
         text: msg,
         type: "0-empty"
@@ -82,19 +62,8 @@ function tree_clear() {
     js_tree.refresh();
 }
 
-function do_filter_check() {
-    let js_tree = $("#js_tree_demo_div").jstree(true);
-    if (js_tree && js_tree.filter_check) {
-        if (js_tree.filter_check === "Collapse") {
-            collapse_tree();
-        } else if (js_tree.filter_check === "Expand") {
-            expand_tree();
-        }
-    }
-}
-
 function update_tree(data_in) {
-    let js_tree = $("#js_tree_demo_div").jstree(true);
+    let js_tree = $(TREE_DIV).jstree(true);
     js_tree.settings.core.data = data_in.core;
     js_tree.refresh(true, true);
 }
@@ -124,19 +93,12 @@ function setTreeTitle(object_name) {
         `<div><b>${object_name}</b></div>`;
 }
 
-
 function do_action(action, data_in) {
-    let js_tree = $("#js_tree_demo_div").jstree(true);
-    if (data_in.filter_check && js_tree) {
-        js_tree.filter_check = data_in.filter_check;
-    }
     if (data_in.title_string) {
         updateAllTitles(data_in.title_string);
     }
     if (action === "tree_refresh") {
         update_tree(data_in);
-    } else if (action === "filter_check") {
-        do_filter_check();
     } else if (action === "tree_clear") {
         tree_clear();
     } else {
@@ -158,7 +120,6 @@ window.fusionJavaScriptHandler = {
             console.log(e);
             console.log("exception caught with command: " + action);
         }
-        let js_tree = $("#js_tree_demo_div").jstree(true);
         return "OK";
     }
 };
