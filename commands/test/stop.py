@@ -9,7 +9,7 @@ app = adsk.core.Application.get()
 ui = app.userInterface
 
 CMD_NAME = 'Stop Recording'
-CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
+CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_stop'
 CMD_Description = 'Stop Recording a Test Case'
 IS_PROMOTED = True
 

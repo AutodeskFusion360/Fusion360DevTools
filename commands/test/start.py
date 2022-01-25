@@ -10,7 +10,7 @@ app = adsk.core.Application.get()
 ui = app.userInterface
 
 CMD_NAME = 'Start Recording'
-CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
+CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_start'
 CMD_Description = 'Start Recording a Test Case'
 IS_PROMOTED = True
 
@@ -88,7 +88,9 @@ def stop():
 # Function to be called when a user clicks the corresponding button in the UI.
 def command_created(args: adsk.core.CommandCreatedEventArgs):
     futil.log(f'{CMD_NAME} Command Created Event')
+    inputs = args.command.commandInputs
 
+    inputs.addTextBoxCommandInput('test_name', 'Test Name', 'My Test', 1, False)
     # Connect to the events that are needed by this command.
     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
     futil.add_handler(args.command.destroy, command_destroy, local_handlers=local_handlers)
@@ -98,7 +100,12 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
 def command_execute(args: adsk.core.CommandEventArgs):
     futil.log(f'{CMD_NAME} Command Execute Event')
 
-    start_recording()
+    inputs = args.command.commandInputs
+    test_name_input: adsk.core.TextBoxCommandInput = inputs.itemById('test_name')
+
+    test_name = test_name_input.text
+
+    start_recording(test_name)
 
 
 # This function will be called when the user completes the command.

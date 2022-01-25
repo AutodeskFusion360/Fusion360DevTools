@@ -14,7 +14,7 @@ ui = app.userInterface
 # they are not released and garbage collected.
 local_handlers = []
 create_handlers = []
-execute_handlers = []
+preview_handlers = []
 
 std_commands = ['SelectCommand', 'CommitCommand']
 capture_commands = []
@@ -84,7 +84,7 @@ def ui_command_terminated(args: adsk.core.ApplicationCommandEventArgs):
 
 # Function to be executed by the dataFileComplete event.
 def cmd_created(args: adsk.core.CommandCreatedEventArgs):
-    global execute_handlers
+    global preview_handlers
 
     futil.log(f'In cmd_created event handler for: {args.command.parentCommandDefinition.id}')
 
@@ -108,7 +108,7 @@ def cmd_created(args: adsk.core.CommandCreatedEventArgs):
 
 # Function to be executed by the dataFileComplete event.
 def cmd_preview(args: adsk.core.CommandEventArgs):
-    global execute_handlers
+    global preview_handlers
     futil.log(f'In cmd_preview event handler ({args.firingEvent.name}) for: {args.command.parentCommandDefinition.id}')
 
     # for cmd_input in args.command.commandInputs:
@@ -133,7 +133,7 @@ def cmd_preview(args: adsk.core.CommandEventArgs):
 
 # Function to be executed by the dataFileComplete event.
 def cmd_executed(args: adsk.core.CommandEventArgs):
-    global execute_handlers
+    global preview_handlers
     futil.log(f'In cmd_executed event handler ({args.firingEvent.name}) for: {args.command.parentCommandDefinition.id}')
 
     # for cmd_input in args.command.commandInputs:
