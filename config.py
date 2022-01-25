@@ -27,6 +27,10 @@ dev_panel_name = 'API Tools'
 dev_panel_id = f'{ADDIN_NAME}_dev_panel'
 dev_panel_after = data_panel_id
 
+test_panel_name = 'Testing'
+test_panel_id = f'{ADDIN_NAME}_test_panel'
+test_panel_after = dev_panel_id
+
 # Palettes
 ui_palette_name = 'User Interface Details'
 ui_palette_id = f'{ADDIN_NAME}_ui_palette'
@@ -44,3 +48,7 @@ all_workspace_names = [
     'FusionDocumentationEnvironment', 'ElectronEmptyLbrEnvironment', 'ElectronDeviceEnvironment',
     'ElectronFootprintEnvironment', 'ElectronSymbolEnvironment', 'ElectronPackageEnvironment'
 ]
+
+# Testing
+IS_RECORDING = False
+

@@ -36,6 +36,7 @@ def add_handler(
     handler_type = module.__dict__[event.add.__annotations__['handler']]
     handler = _create_handler(handler_type, callback, event, name, local_handlers)
     event.add(handler)
+    return handler
 
 
 def clear_handlers():

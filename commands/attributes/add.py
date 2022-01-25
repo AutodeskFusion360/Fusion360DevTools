@@ -96,7 +96,8 @@ def command_execute(args: adsk.core.CommandEventArgs):
     attribute_group: adsk.core.StringValueCommandInput = inputs.itemById('attribute_group')
     attribute_name: adsk.core.StringValueCommandInput = inputs.itemById('attribute_name')
     attribute_value: adsk.core.StringValueCommandInput = inputs.itemById('attribute_value')
-
+    
+    futil.log(f'Selection Count: {selection_input.selectionCount}')
     selection = selection_input.selection(0)
     selected_entity = selection.entity
 
