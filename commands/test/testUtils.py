@@ -16,7 +16,7 @@ TOLERANCE = .00001
 # Local list of event handlers used to maintain a reference so
 # they are not released and garbage collected.
 local_handlers = []
-create_handlers = []
+create_handlers = {}
 preview_handlers = []
 ui_starting_handlers = []
 ui_terminated_handlers = []
@@ -24,7 +24,7 @@ ui_terminated_handlers = []
 NO_RECORD_COMMANDS = ['SelectCommand', 'CommitCommand',
                       f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_start',
                       f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_stop',
-                      f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_record']
+                      f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_run']
 capture_commands = []
 
 CURRENT_TEST_NAME = ''
@@ -65,9 +65,14 @@ def clear_cmd_handlers(cmd_def: adsk.core.CommandDefinition):
     global create_handlers
     global capture_commands
     global preview_handlers
-    for cmd_event in create_handlers:
+    # for cmd_event in create_handlers:
+    #     cmd_def.commandCreated.remove(cmd_event)
+
+    cmd_event = create_handlers.get(cmd_def.id, False)
+    if cmd_def:
         cmd_def.commandCreated.remove(cmd_event)
-    create_handlers = []
+        del create_handlers[cmd_def.id]
+    # create_handlers = []
     preview_handlers = []
 
     # TODO Best way?
@@ -97,13 +102,13 @@ def record_command_starting(args: adsk.core.ApplicationCommandEventArgs):
 
     futil.log(f'In record_command_starting event handler for: {args.commandId}')
 
-    cmd_def = args.commandDefinition
+    command_def = args.commandDefinition
     if args.commandId not in NO_RECORD_COMMANDS:
         if args.commandId not in capture_commands:
             capture_commands.append(args.commandId)
 
-            create_handlers.append(
-                futil.add_handler(cmd_def.commandCreated, record_cmd_created, local_handlers=local_handlers))
+            create_handlers[command_def.id] = futil.add_handler(command_def.commandCreated, record_cmd_created,
+                                                                local_handlers=local_handlers)
 
 
 def record_cmd_created(args: adsk.core.CommandCreatedEventArgs):
@@ -121,7 +126,7 @@ def record_cmd_created(args: adsk.core.CommandCreatedEventArgs):
 
 def record_cmd_preview(args: adsk.core.CommandEventArgs):
     global CURRENT_INPUT_VALUES
-    futil.log(f'In cmd_preview event handler ({args.firingEvent.name}) for: {args.command.parentCommandDefinition.id}')
+    futil.log(f'In record_cmd_preview event handler ({args.firingEvent.name}) for: {args.command.parentCommandDefinition.id}')
 
     CURRENT_INPUT_VALUES = get_inputs(args.command.commandInputs)
     CURRENT_INPUT_VALUES['command_id'] = args.command.parentCommandDefinition.id
@@ -138,7 +143,7 @@ def cmd_execute(args: adsk.core.CommandEventArgs):
 
 
 def record_command_terminated(args: adsk.core.ApplicationCommandEventArgs):
-    futil.log(f'In ui_command_terminated event handler for: {args.commandId}')
+    futil.log(f'In record_command_terminated event handler for: {args.commandId}')
 
     if args.commandId not in NO_RECORD_COMMANDS:
         write_physical_properties()
@@ -157,8 +162,8 @@ def run_test(test_name: str):
     command_def = ui.commandDefinitions.itemById(input_values['command_id'])
     import_fusion_file(test_name, 'start')
 
-    create_handlers.append(
-        futil.add_handler(command_def.commandCreated, run_cmd_created, local_handlers=local_handlers))
+    create_handlers[command_def.id] = futil.add_handler(command_def.commandCreated, run_cmd_created,
+                                                        local_handlers=local_handlers)
 
     ui_terminated_handlers.append(
         futil.add_handler(ui.commandTerminated, run_cmd_terminated, local_handlers=local_handlers))
@@ -178,12 +183,15 @@ def run_cmd_created(args: adsk.core.CommandCreatedEventArgs):
 
 
 def run_cmd_terminated(args: adsk.core.ApplicationCommandEventArgs):
-    futil.log(f'In ui_command_terminated_run event handler for: {args.commandId}')
+    futil.log(f'In run_cmd_terminated event handler for: {args.commandId}')
 
-    clear_cmd_handlers(args.commandDefinition)
-    clear_ui_handlers()
+    if args.commandId not in NO_RECORD_COMMANDS:
+        clear_cmd_handlers(args.commandDefinition)
 
-    compare_physical_results()
+    if len(create_handlers.keys()) == 0:
+        clear_ui_handlers()
+
+        compare_physical_results()
 
 
 def get_inputs(command_inputs: adsk.core.CommandInputs):
@@ -270,19 +278,6 @@ def set_inputs(command_inputs: adsk.core.CommandInputs, input_values: dict):
     return input_values
 
 
-def write_physical_properties():
-    design = adsk.fusion.Design.cast(app.activeDocument.products.itemByProductType('DesignProductType'))
-    physical_props = design.rootComponent.physicalProperties
-    result_values = {
-        'volume': physical_props.volume,
-        'mass': physical_props.mass,
-        'com_x': physical_props.centerOfMass.x,
-        'com_y': physical_props.centerOfMass.y,
-        'com_z': physical_props.centerOfMass.z
-    }
-    write_dict_to_json(result_values, 'results')
-
-
 def get_user_app_dir(app_dir_name: str) -> str:
     user_dir = os.path.expanduser("~")
     app_dir = os.path.join(user_dir, app_dir_name, "")
@@ -316,7 +311,7 @@ def write_dict_to_json(the_dict: dict, file_name: str):
         outfile.write(json.dumps(the_dict, indent=4))
 
 
-def read_dict_from_json(file_name: str):
+def read_dict_from_json(file_name: str) -> dict:
     test_dir = get_test_dir(CURRENT_TEST_NAME)
     input_file = os.path.join(test_dir, file_name + '.json')
     with open(input_file) as json_file:
@@ -334,18 +329,33 @@ def import_fusion_file(test_name: str, file_name: str):
     new_document.activate()
 
 
+def write_physical_properties():
+    result_values = get_root_physical_props()
+    write_dict_to_json(result_values, 'results')
+
+
 def compare_physical_results():
-    result_values = read_dict_from_json('results')
+    original_values = read_dict_from_json('results')
+    new_values = get_root_physical_props()
+    results = {}
+    for key, value in original_values.items():
+        new_value = new_values.get(key, False)
+        if new_value:
+            results[key] = abs(original_values[key] - new_values[key]) < TOLERANCE
 
+    ui.messageBox(f"{json.dumps(results, indent=4)}", "Geometry Comparison - Test Results")
+
+
+def get_root_physical_props() -> dict:
     design = adsk.fusion.Design.cast(app.activeDocument.products.itemByProductType('DesignProductType'))
-    physical_props = design.rootComponent.physicalProperties
-    results = {
-        'volume': result_values['volume'] - physical_props.volume < TOLERANCE,
-        'mass': result_values['mass'] - physical_props.mass < TOLERANCE,
-        'com_x': result_values['com_x'] - physical_props.centerOfMass.x < TOLERANCE,
-        'com_y': result_values['com_y'] - physical_props.centerOfMass.y < TOLERANCE,
-        'com_z': result_values['com_z'] - physical_props.centerOfMass.z < TOLERANCE,
+    physical_props = design.rootComponent.getPhysicalProperties(adsk.fusion.CalculationAccuracy.HighCalculationAccuracy)
+    property_values = {
+        'volume': physical_props.volume,
+        'mass': physical_props.mass,
+        'com_x': physical_props.centerOfMass.x,
+        'com_y': physical_props.centerOfMass.y,
+        'com_z': physical_props.centerOfMass.z
     }
-
-    ui.messageBox(f"Did Test Pass:\n{str(results)}")
+    futil.log(f'get_root_physical_props:\n {json.dumps(property_values, indent=4)}')
+    return property_values
 

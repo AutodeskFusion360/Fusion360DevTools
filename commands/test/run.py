@@ -9,7 +9,7 @@ app = adsk.core.Application.get()
 ui = app.userInterface
 
 CMD_NAME = 'Run Test'
-CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_record'
+CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_run'
 CMD_Description = 'Run a Test Case'
 IS_PROMOTED = True
 
