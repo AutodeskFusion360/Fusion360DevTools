@@ -37,6 +37,11 @@ addins_panel_name = 'ADD-INS'
 addins_panel_id = f'{ADDIN_NAME}_addins_panel'
 addins_panel_after = test_panel_id
 
+
+help_panel_name = 'HELP'
+help_panel_id = f'{ADDIN_NAME}_help_panel'
+help_panel_after = addins_panel_id
+
 # Palettes
 ui_palette_name = 'User Interface Details'
 ui_palette_id = f'{ADDIN_NAME}_ui_palette'

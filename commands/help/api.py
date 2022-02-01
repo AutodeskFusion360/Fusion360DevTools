@@ -1,4 +1,4 @@
-import cProfile
+import webbrowser
 
 import adsk.core
 import adsk.fusion
@@ -10,22 +10,24 @@ from ... import config
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-CMD_NAME = 'Start Performance Capture'
+CMD_NAME = 'API Documentation'
 CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
-CMD_Description = 'Start recording performance information'
+CMD_Description = 'Open API help documentation in your browser'
 IS_PROMOTED = True
+
+URL = 'https://help.autodesk.com/view/fusion360/ENU/?guid=GUID-A92A4B10-3781-4925-94C6-47DA85A4F65A'
 
 # Global variables by referencing values from /config.py
 WORKSPACE_ID = config.design_workspace
 TAB_ID = config.design_tab_id
 TAB_NAME = config.design_tab_name
 
-PANEL_ID = config.test_panel_id
-PANEL_NAME = config.test_panel_name
-PANEL_AFTER = config.test_panel_after
+PANEL_ID = config.help_panel_id
+PANEL_NAME = config.help_panel_name
+PANEL_AFTER = config.help_panel_after
 
 # Resource location for command icons, here we assume a sub folder in this directory named "resources".
-ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'performanceStart', '')
+ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', '')
 
 # Holds references to event handlers
 local_handlers = []
@@ -99,8 +101,7 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
 # This function will be called when the user clicks the OK button in the command dialog.
 def command_execute(args: adsk.core.CommandEventArgs):
     futil.log(f'************Begin capturing performance profile information************')
-    config.PROFILER = cProfile.Profile()
-    config.PROFILER.enable()
+    webbrowser.open_new_tab(URL)
 
 
 # This function will be called when the user completes the command.

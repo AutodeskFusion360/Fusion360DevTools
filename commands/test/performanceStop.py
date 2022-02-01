@@ -13,9 +13,9 @@ from pstats import SortKey
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-CMD_NAME = 'Stop Performance Log'
+CMD_NAME = 'Stop Performance Capture'
 CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
-CMD_Description = 'Stop Recording Performance Information'
+CMD_Description = 'Stop recording performance information and display results'
 IS_PROMOTED = True
 
 # Global variables by referencing values from /config.py
@@ -28,7 +28,7 @@ PANEL_NAME = config.test_panel_name
 PANEL_AFTER = config.test_panel_after
 
 # Resource location for command icons, here we assume a sub folder in this directory named "resources".
-ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', '')
+ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'performanceStop', '')
 
 # Holds references to event handlers
 local_handlers = []

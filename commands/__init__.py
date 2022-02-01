@@ -5,6 +5,7 @@ from .test import record, stop, run, performanceStart, performanceStop
 from .data import entry as data
 from .existing import entry as existing
 from .uiExplorer import entry as ui_explorer
+from .help import api, chm
 
 commands = [
     add, all, selected,
@@ -13,7 +14,8 @@ commands = [
     ui_explorer,
     existing,
     appearance,
-    record, stop, run, performanceStart, performanceStop
+    record, stop, run, performanceStart, performanceStop,
+    api, chm
 ]
 
 

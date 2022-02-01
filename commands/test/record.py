@@ -9,7 +9,7 @@ from .testUtils import start_recording
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-CMD_NAME = 'Start Recording'
+CMD_NAME = 'Record Test'
 CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_start'
 CMD_Description = 'Start Recording a Test Case'
 IS_PROMOTED = True
