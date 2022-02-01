@@ -25,7 +25,7 @@ def link_for_url(url: str) -> str:
 @dataclass
 class FusionData:
     # This should be set at creation or at least validity checked BEFORE calling this
-    data_file: adsk.core.DataFile = field(repr=False, default=app.activeDocument.dataFile)
+    data_file: adsk.core.DataFile = field(repr=False, default=None)
 
     # THe following are computed based on current state of Fusion and are not "printed" by default
     hub: adsk.core.DataHub = field(repr=False, init=False)
