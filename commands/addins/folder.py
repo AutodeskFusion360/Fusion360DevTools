@@ -88,7 +88,6 @@ def stop():
 
 # Function to be called when a user clicks the corresponding button in the UI.
 def command_created(args: adsk.core.CommandCreatedEventArgs):
-    futil.log(f'{CMD_NAME} Command Created Event')
     args.command.isAutoExecute = True
 
     # Connect to the events that are needed by this command.
@@ -104,10 +103,11 @@ def command_execute(args: adsk.core.CommandEventArgs):
     else:
         prefix = ''
         base_dir = os.path.join('AppData', 'Roaming')
+
     home_dir = os.path.expanduser("~")
     addins_path = os.path.join(home_dir, base_dir, 'Autodesk', 'Autodesk Fusion 360', 'API', 'AddIns', '')
-
     url = f'{prefix}{addins_path}'
+
     futil.log(f'Opening URL: {url}')
     webbrowser.open_new_tab(url)
 

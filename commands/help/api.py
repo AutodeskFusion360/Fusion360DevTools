@@ -90,7 +90,6 @@ def stop():
 
 # Function to be called when a user clicks the corresponding button in the UI.
 def command_created(args: adsk.core.CommandCreatedEventArgs):
-    futil.log(f'{CMD_NAME} Command Created Event')
     args.command.isAutoExecute = True
 
     # Connect to the events that are needed by this command.
@@ -100,7 +99,7 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
 
 # This function will be called when the user clicks the OK button in the command dialog.
 def command_execute(args: adsk.core.CommandEventArgs):
-    futil.log(f'************Begin capturing performance profile information************')
+    futil.log(f'Opening URL: {URL}')
     webbrowser.open_new_tab(URL)
 
 
