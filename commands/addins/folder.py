@@ -98,23 +98,18 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
 
 # This function will be called when the user clicks the OK button in the command dialog.
 def command_execute(args: adsk.core.CommandEventArgs):
-    futil.log(f'************Begin capturing performance profile information************')
-
-    home_dir = os.path.expanduser("~")
-
     if sys.platform == 'darwin':
-
         prefix = 'file://'
         base_dir = os.path.join('Library', 'Application Support')
     else:
-        prefix = 'C:'
-        base_dir = 'AppData'
-
+        prefix = ''
+        base_dir = os.path.join('AppData', 'Roaming')
+    home_dir = os.path.expanduser("~")
     addins_path = os.path.join(home_dir, base_dir, 'Autodesk', 'Autodesk Fusion 360', 'API', 'AddIns', '')
 
-    URL = f'{prefix}{addins_path}'
-
-    webbrowser.open_new_tab(URL)
+    url = f'{prefix}{addins_path}'
+    futil.log(f'Opening URL: {url}')
+    webbrowser.open_new_tab(url)
 
 
 # This function will be called when the user completes the command.
