@@ -1,3 +1,5 @@
+import cProfile
+
 DEBUG = True
 
 # ADDIN_NAME = os.path.basename(os.path.dirname(__file__))
@@ -15,21 +17,25 @@ design_tab_id = f'{ADDIN_NAME}_design_tab'
 design_tab_name = f'{ADDIN_NAME}'
 
 # Panels
-attributes_panel_name = 'Attributes'
+attributes_panel_name = 'ATTRIBUTES'
 attributes_panel_id = f'{ADDIN_NAME}_attributes_panel'
 attributes_panel_after = ''
 
-data_panel_name = 'Data'
+data_panel_name = 'DATA'
 data_panel_id = f'{ADDIN_NAME}_data_panel'
 data_panel_after = attributes_panel_id
 
-dev_panel_name = 'API Tools'
+dev_panel_name = 'INFO'
 dev_panel_id = f'{ADDIN_NAME}_dev_panel'
 dev_panel_after = data_panel_id
 
-test_panel_name = 'Testing'
+test_panel_name = 'TEST'
 test_panel_id = f'{ADDIN_NAME}_test_panel'
 test_panel_after = dev_panel_id
+
+addins_panel_name = 'ADD-INS'
+addins_panel_id = f'{ADDIN_NAME}_addins_panel'
+addins_panel_after = test_panel_id
 
 # Palettes
 ui_palette_name = 'User Interface Details'
@@ -51,4 +57,4 @@ all_workspace_names = [
 
 # Testing
 IS_RECORDING = False
-
+PROFILER = None

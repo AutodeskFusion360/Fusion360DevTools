@@ -6,22 +6,22 @@ from ...lib import fusion360utils as futil
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-CMD_ID = 'ScriptsManagerCommand'
+CMD_IDS = ['ScriptsManagerCommand', 'ExchangeAppStoreCommand']
 IS_PROMOTED = True
 
 WORKSPACE_ID = config.design_workspace
 TAB_ID = config.design_tab_id
 TAB_NAME = config.design_tab_name
 
-PANEL_ID = config.dev_panel_id
-PANEL_NAME = config.dev_panel_name
-PANEL_AFTER = config.dev_panel_after
+PANEL_ID = config.addins_panel_id
+PANEL_NAME = config.addins_panel_name
+PANEL_AFTER = config.addins_panel_after
 
 local_handlers = []
 
 
 def start():
-    cmd_def = ui.commandDefinitions.itemById(CMD_ID)
+
     workspace = ui.workspaces.itemById(WORKSPACE_ID)
 
     toolbar_tab = workspace.toolbarTabs.itemById(TAB_ID)
@@ -32,19 +32,22 @@ def start():
     if panel is None:
         panel = toolbar_tab.toolbarPanels.add(PANEL_ID, PANEL_NAME, PANEL_AFTER, False)
 
-    control = panel.controls.addCommand(cmd_def)
-    control.isPromoted = IS_PROMOTED
+    for cmd_id in CMD_IDS:
+        cmd_def = ui.commandDefinitions.itemById(cmd_id)
+        panel.controls.addCommand(cmd_def)
 
 
 def stop():
     workspace = ui.workspaces.itemById(WORKSPACE_ID)
     panel = workspace.toolbarPanels.itemById(PANEL_ID)
     toolbar_tab = workspace.toolbarTabs.itemById(TAB_ID)
-    command_control = panel.controls.itemById(CMD_ID)
 
-    if command_control:
-        command_control.deleteMe()
-    if not len(panel.controls):
-        panel.deleteMe()
-    if not len(toolbar_tab.toolbarPanels):
-        toolbar_tab.deleteMe()
+    for cmd_id in CMD_IDS:
+        command_control = panel.controls.itemById(cmd_id)
+
+        if command_control:
+            command_control.deleteMe()
+        if panel.controls.count == 0:
+            panel.deleteMe()
+        if toolbar_tab.toolbarPanels.count == 0:
+            toolbar_tab.deleteMe()

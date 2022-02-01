@@ -1,7 +1,7 @@
 from .apiExplorer import entry as api_explorer
 from .appearances import entry as appearance
 from .attributes import add, all, selected
-from .test import start, stop, run
+from .test import start, stop, run, performanceStart, performanceStop
 from .data import entry as data
 from .existing import entry as existing
 from .uiExplorer import entry as ui_explorer
@@ -13,7 +13,7 @@ commands = [
     ui_explorer,
     existing,
     appearance,
-    start, stop, run
+    start, stop, run, performanceStart, performanceStop
 ]
 
 
