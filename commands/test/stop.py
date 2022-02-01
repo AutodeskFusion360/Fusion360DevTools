@@ -23,7 +23,7 @@ PANEL_NAME = config.test_panel_name
 PANEL_AFTER = config.test_panel_after
 
 # Resource location for command icons, here we assume a sub folder in this directory named "resources".
-ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', '')
+ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'stop', '')
 
 # Holds references to event handlers
 local_handlers = []
