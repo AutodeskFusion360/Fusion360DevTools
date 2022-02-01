@@ -3,7 +3,7 @@ from .appearances import entry as appearance
 from .attributes import add, all, selected
 from .test import record, stop, run, performanceStart, performanceStop
 from .data import entry as data
-from .existing import entry as existing
+from .addins import existing, folder
 from .uiExplorer import entry as ui_explorer
 from .help import api, chm
 
@@ -12,7 +12,7 @@ commands = [
     data,
     api_explorer,
     ui_explorer,
-    existing,
+    existing, folder,
     appearance,
     record, stop, run, performanceStart, performanceStop,
     api, chm

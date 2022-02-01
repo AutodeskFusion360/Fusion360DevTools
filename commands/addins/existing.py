@@ -21,7 +21,7 @@ local_handlers = []
 
 
 def start():
-
+    global IS_PROMOTED
     workspace = ui.workspaces.itemById(WORKSPACE_ID)
 
     toolbar_tab = workspace.toolbarTabs.itemById(TAB_ID)
@@ -34,7 +34,9 @@ def start():
 
     for cmd_id in CMD_IDS:
         cmd_def = ui.commandDefinitions.itemById(cmd_id)
-        panel.controls.addCommand(cmd_def)
+        control = panel.controls.addCommand(cmd_def)
+        control.isPromoted = IS_PROMOTED
+        IS_PROMOTED = False
 
 
 def stop():
