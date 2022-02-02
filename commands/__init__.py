@@ -1,11 +1,12 @@
+from .addins import existing, folder
 from .apiExplorer import entry as api_explorer
 from .appearances import entry as appearance
 from .attributes import add, all, selected
-from .test import record, stop, run, performanceStart, performanceStop
+from .commandStream import entry as command_stream
 from .data import entry as data
-from .addins import existing, folder
+from .help import api, chm, github
+from .test import record, stop, run, performanceStart, performanceStop
 from .uiExplorer import entry as ui_explorer
-from .help import api, chm
 
 commands = [
     add, all, selected,
@@ -15,7 +16,8 @@ commands = [
     existing, folder,
     appearance,
     record, stop, run, performanceStart, performanceStop,
-    api, chm
+    api, chm, github,
+    command_stream
 ]
 
 

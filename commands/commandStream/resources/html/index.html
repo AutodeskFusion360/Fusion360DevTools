@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fusion 360 Dev Tools - Command Stream</title>
+    <link href="static/vendor/bootstrap-3.3.7-dist/css/bootstrap.css" rel="stylesheet">
+    <script src="static/vendor/bootstrap-3.3.7-dist/js/bootstrap.js"></script>
+    <script src="static/command_stream.js"></script>
+</head>
+<body>
+
+<div class="col-sm-12" style="text-align:left;">
+    <div class="h2" id="command_stream_title">Command Stream</div>
+
+    <div class="col-sm-12">
+        <div>
+            <p>
+                Select Items or execute commands to see relevant information streamed here.<br>
+                Note: Commands stop recording if the palette is closed.
+            </p>
+        </div>
+    </div>
+
+    <div>
+        <h3>Current Selections</h3>
+        <div style="padding-left: 10px;">
+            <ul style="list-style-type:circle" id='selections'>
+                <li>Nothing Selected</li>
+            </ul>
+        </div>
+    </div>
+    <div>
+        <h3>Last 20 Commands (Name - ID)</h3>
+        <div style="padding-left: 10px;">
+            <ul style="list-style-type:circle" id='commands'>
+                <li>Select a command</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

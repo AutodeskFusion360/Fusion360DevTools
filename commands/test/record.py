@@ -65,23 +65,23 @@ def stop():
     workspace = ui.workspaces.itemById(WORKSPACE_ID)
     panel = workspace.toolbarPanels.itemById(PANEL_ID)
     toolbar_tab = workspace.toolbarTabs.itemById(TAB_ID)
-    control = panel.controls.itemById(CMD_ID)
+    command_control = panel.controls.itemById(CMD_ID)
     command_definition = ui.commandDefinitions.itemById(CMD_ID)
 
     # Delete the button command control
-    if control:
-        control.deleteMe()
+    if command_control:
+        command_control.deleteMe()
 
     # Delete the command definition
     if command_definition:
         command_definition.deleteMe()
 
     # Delete the panel if it is empty
-    if not len(panel.controls):
+    if panel.controls.count == 0:
         panel.deleteMe()
 
     # Delete the tab if it is empty
-    if not len(toolbar_tab.toolbarPanels):
+    if toolbar_tab.toolbarPanels.count == 0:
         toolbar_tab.deleteMe()
 
 

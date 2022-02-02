@@ -54,7 +54,7 @@ def _create_handler(
         local_handlers: list = None
 ):
     handler = _define_handler(handler_type, callback, name)()
-    (local_handlers or _handlers).append(handler)
+    (local_handlers if local_handlers is not None else _handlers).append(handler)
     return handler
 
 

@@ -1,36 +1,35 @@
+import webbrowser
+
 import adsk.core
+import adsk.fusion
 import os
-import json
 from ...lib import fusion360utils as futil
 from ... import config
-from .appearance_tree import build_data, adjust_material
+
 
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_appearance_explorer'
-CMD_NAME = 'Appearance Explorer'
-CMD_Description = 'View all applied Appearances'
-IS_PROMOTED = True
-COMMAND_BESIDE_ID = ''
+CMD_NAME = 'Fusion 360 GitHub'
+CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
+CMD_Description = 'View other interesting samples on the Fusion 360 GitHub page'
+IS_PROMOTED = False
 
+URL = 'https://autodeskfusion360.github.io/'
+
+# Global variables by referencing values from /config.py
 WORKSPACE_ID = config.design_workspace
 TAB_ID = config.design_tab_id
 TAB_NAME = config.design_tab_name
 
-PANEL_ID = config.info_panel_id
-PANEL_NAME = config.info_panel_name
-PANEL_AFTER = config.info_panel_after
+PANEL_ID = config.help_panel_id
+PANEL_NAME = config.help_panel_name
+PANEL_AFTER = config.help_panel_after
 
-PALETTE_NAME = config.appearance_palette_name
-PALETTE_ID = config.appearance_palette_id
-PALETTE_URL = './commands/appearances/resources/html/index.html'
-PALETTE_DOCKING = adsk.core.PaletteDockingStates.PaletteDockStateRight
+# Resource location for command icons, here we assume a sub folder in this directory named "resources".
+ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'github', '')
 
-ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', '')
-
-# Local list of event handlers used to maintain a reference so
-# they are not released and garbage collected.
+# Holds references to event handlers
 local_handlers = []
 
 
@@ -89,61 +88,22 @@ def stop():
         toolbar_tab.deleteMe()
 
 
+# Function to be called when a user clicks the corresponding button in the UI.
 def command_created(args: adsk.core.CommandCreatedEventArgs):
+    args.command.isAutoExecute = True
+
+    # Connect to the events that are needed by this command.
     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
     futil.add_handler(args.command.destroy, command_destroy, local_handlers=local_handlers)
 
 
+# This function will be called when the user clicks the OK button in the command dialog.
 def command_execute(args: adsk.core.CommandEventArgs):
-    palettes = ui.palettes
-    palette = palettes.itemById(PALETTE_ID)
-    if palette is None:
-        palette = palettes.add(
-            id=PALETTE_ID,
-            name=PALETTE_NAME,
-            htmlFileURL=PALETTE_URL,
-            isVisible=True,
-            showCloseButton=True,
-            isResizable=True,
-            width=650,
-            height=600,
-            useNewWebBrowser=True
-        )
-        futil.add_handler(palette.closed, palette_closed)
-        futil.add_handler(palette.navigatingURL, palette_navigating)
-        futil.add_handler(palette.incomingFromHTML, palette_incoming)
-
-    if palette.dockingState == adsk.core.PaletteDockingStates.PaletteDockStateFloating:
-        palette.dockingState = PALETTE_DOCKING
-
-    palette.isVisible = True
+    futil.log(f'Opening URL: {URL}')
+    webbrowser.open_new_tab(URL)
 
 
+# This function will be called when the user completes the command.
 def command_destroy(args: adsk.core.CommandEventArgs):
     global local_handlers
     local_handlers = []
-
-
-def palette_closed(args: adsk.core.UserInterfaceGeneralEventArgs):
-    palette = ui.palettes.itemById(PALETTE_ID)
-    if palette:
-        palette.deleteMe()
-
-
-def palette_navigating(args: adsk.core.NavigationEventArgs):
-    url = args.navigationURL
-    if url.startswith("http"):
-        args.launchExternally = True
-
-
-def palette_incoming(html_args: adsk.core.HTMLEventArgs):
-    message_action = html_args.action
-
-    if message_action == 'get_tree_data':
-        a_tree_data = build_data()
-        send_data = json.dumps(a_tree_data)
-        html_args.returnData = send_data
-
-    elif html_args.action == "check_node":
-        message_data: dict = json.loads(html_args.data)
-        adjust_material(message_data["node_id"], message_data["remove_material"], message_data["node_type"])

@@ -1,14 +1,13 @@
+import io
+import os
+import pstats
+from pstats import SortKey
+
 import adsk.core
 import adsk.fusion
-import os
-from ...lib import fusion360utils as futil
-from ... import config
-from .testUtils import start_recording
 
-import cProfile
-import pstats
-import io
-from pstats import SortKey
+from ... import config
+from ...lib import fusion360utils as futil
 
 app = adsk.core.Application.get()
 ui = app.userInterface
@@ -17,6 +16,11 @@ CMD_NAME = 'Stop Performance Capture'
 CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
 CMD_Description = 'Stop recording performance information and display results'
 IS_PROMOTED = True
+
+WARNING_MESSAGE = '<b>Note about removing dir names:</b> <br> ' \
+                  'If you have multiple functions on the same line of the same filename, ' \
+                  'and have the same function name, then the statistics for these two entries ' \
+                  'are accumulated into a single entry.  <br>For example: <b>entry.py/start</b>'
 
 # Global variables by referencing values from /config.py
 WORKSPACE_ID = config.design_workspace
@@ -69,23 +73,23 @@ def stop():
     workspace = ui.workspaces.itemById(WORKSPACE_ID)
     panel = workspace.toolbarPanels.itemById(PANEL_ID)
     toolbar_tab = workspace.toolbarTabs.itemById(TAB_ID)
-    control = panel.controls.itemById(CMD_ID)
+    command_control = panel.controls.itemById(CMD_ID)
     command_definition = ui.commandDefinitions.itemById(CMD_ID)
 
     # Delete the button command control
-    if control:
-        control.deleteMe()
+    if command_control:
+        command_control.deleteMe()
 
     # Delete the command definition
     if command_definition:
         command_definition.deleteMe()
 
     # Delete the panel if it is empty
-    if not len(panel.controls):
+    if panel.controls.count == 0:
         panel.deleteMe()
 
     # Delete the tab if it is empty
-    if not len(toolbar_tab.toolbarPanels):
+    if toolbar_tab.toolbarPanels.count == 0:
         toolbar_tab.deleteMe()
 
 
@@ -108,9 +112,10 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
     drop_down.listItems.add('NFL', False)
     drop_down.listItems.add('FILENAME', False)
 
-    inputs.addIntegerSpinnerCommandInput('num_lines', 'Number of Lines', 0, 1000, 5, 20)
+    inputs.addIntegerSpinnerCommandInput('num_lines', 'Number of Lines', 0, 1000, 7, 20)
     inputs.addBoolValueInput('strip_dirs', 'Remove directory names?', True, '', True)
-    inputs.addTextBoxCommandInput('test_name', 'Test Name', 'My Test', 1, False)
+    warning_box = inputs.addTextBoxCommandInput('warning_box', 'warning_box', WARNING_MESSAGE, 5, True)
+    warning_box.isFullWidth = True
 
     # Connect to the events that are needed by this command.
     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
