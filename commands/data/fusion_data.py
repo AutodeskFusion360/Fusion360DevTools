@@ -1,11 +1,21 @@
-from dataclasses import dataclass, field, asdict
+#  Copyright 2022 by Autodesk, Inc.
+#  Permission to use, copy, modify, and distribute this software in object code form
+#  for any purpose and without fee is hereby granted, provided that the above copyright
+#  notice appears in all copies and that both that copyright notice and the limited
+#  warranty and restricted rights notice below appear in all supporting documentation.
+#
+#  AUTODESK PROVIDES THIS PROGRAM "AS IS" AND WITH ALL FAULTS. AUTODESK SPECIFICALLY
+#  DISCLAIMS ANY IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR USE.
+#  AUTODESK, INC. DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
+#  UNINTERRUPTED OR ERROR FREE.
+
+from dataclasses import dataclass, field
 import base64
 import pprint
 
 import adsk.core
-from ...lib.fusion360utils import app, ui
-from ...lib import fusion360utils as fus
-from ... import config
+
+app = adsk.core.Application.get()
 
 
 def b64_url_safe_encode(string):
@@ -92,8 +102,3 @@ class FusionData:
 
     def pretty_string(self):
         return pprint.pformat(self.str_dict())
-
-# @dataclass
-# class ForgeFusionData(FusionData):
-#     thumbnail_url: str = f"https://developer.api.autodesk.com/modelderivative/v2/designdata/" \
-#                          f"{b64_lineage_urn}/thumbnail"
