@@ -26,8 +26,8 @@ TOLERANCE = .00001
 
 # Local list of event handlers used to maintain a reference so
 # they are not released and garbage collected.
-local_handlers = []
-create_handlers = {}
+create_handlers = []
+create_handlers_dict = {}
 preview_handlers = []
 ui_starting_handlers = []
 ui_terminated_handlers = []
@@ -72,44 +72,47 @@ def clear_ui_handlers():
     ui_terminated_handlers = []
 
 
-def clear_cmd_handlers(cmd_def: adsk.core.CommandDefinition):
-    global create_handlers
+def clear_cmd_handlers(command_def: adsk.core.CommandDefinition):
+    global create_handlers_dict
     global capture_commands
     global preview_handlers
-    # for cmd_event in create_handlers:
-    #     cmd_def.commandCreated.remove(cmd_event)
+    global create_handlers
 
-    cmd_event = create_handlers.get(cmd_def.id, False)
-    if cmd_def:
-        cmd_def.commandCreated.remove(cmd_event)
-        del create_handlers[cmd_def.id]
-    # create_handlers = []
+    create_handlers = []
     preview_handlers = []
 
+    command_create_event = create_handlers_dict.get(command_def.id, False)
+    if command_create_event:
+        command_def.commandCreated.remove(command_create_event)
+        del create_handlers_dict[command_def.id]
+
     # TODO Best way?
-    if cmd_def.id in capture_commands:
-        capture_commands.remove(cmd_def.id)
+    if command_def.id in capture_commands:
+        capture_commands.remove(command_def.id)
 
 
 def start_recording(test_name: str):
     global CURRENT_TEST_NAME
     CURRENT_TEST_NAME = test_name
+
     export_active_document('start')
 
-    ui_starting_handlers.append(
-        futil.add_handler(ui.commandStarting, record_command_starting, local_handlers=local_handlers))
-    ui_terminated_handlers.append(
-        futil.add_handler(ui.commandTerminated, record_command_terminated, local_handlers=local_handlers))
+    futil.add_handler(ui.commandStarting, record_command_starting, local_handlers=ui_starting_handlers)
+    futil.add_handler(ui.commandTerminated, record_command_terminated, local_handlers=ui_terminated_handlers)
 
 
 def stop_recording():
-    global local_handlers
-    local_handlers = []
+    futil.log(f'Stop Recording')
     clear_ui_handlers()
+
+    for command_id in create_handlers_dict.keys():
+        command_def = ui.commandDefinitions.itemById(command_id)
+        if command_def:
+            clear_cmd_handlers(command_def)
 
 
 def record_command_starting(args: adsk.core.ApplicationCommandEventArgs):
-    global create_handlers
+    global create_handlers_dict
 
     futil.log(f'In record_command_starting event handler for: {args.commandId}')
 
@@ -118,39 +121,29 @@ def record_command_starting(args: adsk.core.ApplicationCommandEventArgs):
         if args.commandId not in capture_commands:
             capture_commands.append(args.commandId)
 
-            create_handlers[command_def.id] = futil.add_handler(command_def.commandCreated, record_cmd_created,
-                                                                local_handlers=local_handlers)
+            create_handlers_dict[command_def.id] = futil.add_handler(command_def.commandCreated, record_cmd_created,
+                                                                     local_handlers=create_handlers)
 
 
 def record_cmd_created(args: adsk.core.CommandCreatedEventArgs):
     global preview_handlers
     global CURRENT_INPUT_VALUES
+
     CURRENT_INPUT_VALUES = {}
     futil.log(f'In record_cmd_created event handler for: {args.command.parentCommandDefinition.id}')
 
-    # execute_handlers.append(
-    #     futil.add_handler(args.command.execute, cmd_execute, name='execute', local_handlers=local_handlers))
-    preview_handlers.append(
-        futil.add_handler(args.command.executePreview, record_cmd_preview, name='executePreview',
-                          local_handlers=local_handlers))
+    futil.add_handler(args.command.executePreview, record_cmd_preview, name='executePreview',
+                      local_handlers=preview_handlers)
 
 
 def record_cmd_preview(args: adsk.core.CommandEventArgs):
     global CURRENT_INPUT_VALUES
-    futil.log(f'In record_cmd_preview event handler ({args.firingEvent.name}) for: {args.command.parentCommandDefinition.id}')
+    futil.log(
+        f'In record_cmd_preview event handler for: {args.command.parentCommandDefinition.id}')
 
     CURRENT_INPUT_VALUES = get_inputs(args.command.commandInputs)
     CURRENT_INPUT_VALUES['command_id'] = args.command.parentCommandDefinition.id
     futil.log(f'CURRENT_INPUT_VALUES:\n {json.dumps(CURRENT_INPUT_VALUES, indent=4)}')
-
-
-def cmd_execute(args: adsk.core.CommandEventArgs):
-    global preview_handlers
-    futil.log(f'In cmd_executed event handler ({args.firingEvent.name}) for: {args.command.parentCommandDefinition.id}')
-
-    for cmd_event in preview_handlers:
-        args.command.execute.remove(cmd_event)
-    preview_handlers = []
 
 
 def record_command_terminated(args: adsk.core.ApplicationCommandEventArgs):
@@ -173,11 +166,10 @@ def run_test(test_name: str):
     command_def = ui.commandDefinitions.itemById(input_values['command_id'])
     import_fusion_file(test_name, 'start')
 
-    create_handlers[command_def.id] = futil.add_handler(command_def.commandCreated, run_cmd_created,
-                                                        local_handlers=local_handlers)
+    create_handlers_dict[command_def.id] = futil.add_handler(command_def.commandCreated, run_cmd_created,
+                                                             local_handlers=create_handlers)
 
-    ui_terminated_handlers.append(
-        futil.add_handler(ui.commandTerminated, run_cmd_terminated, local_handlers=local_handlers))
+    futil.add_handler(ui.commandTerminated, run_cmd_terminated, local_handlers=ui_terminated_handlers)
 
     command_def.execute()
 
@@ -199,9 +191,8 @@ def run_cmd_terminated(args: adsk.core.ApplicationCommandEventArgs):
     if args.commandId not in NO_RECORD_COMMANDS:
         clear_cmd_handlers(args.commandDefinition)
 
-    if len(create_handlers.keys()) == 0:
+    if len(create_handlers_dict.keys()) == 0:
         clear_ui_handlers()
-
         compare_physical_results()
 
 
@@ -289,19 +280,31 @@ def set_inputs(command_inputs: adsk.core.CommandInputs, input_values: dict):
     return input_values
 
 
-def get_user_app_dir(app_dir_name: str) -> str:
+def get_user_app_dir(app_name: str) -> str:
     user_dir = os.path.expanduser("~")
-    app_dir = os.path.join(user_dir, app_dir_name, "")
+    app_dir = os.path.join(user_dir, app_name, "")
     if not os.path.exists(app_dir):
         os.makedirs(app_dir)
     return app_dir
 
 
-def get_test_dir(test_name: str) -> str:
+def get_test_base_dir() -> str:
     app_dir = get_user_app_dir(config.ADDIN_NAME)
-    test_dir = os.path.join(app_dir, test_name, "")
+
+    test_base_dir = os.path.join(app_dir, 'TESTS', "")
+    if not os.path.exists(test_base_dir):
+        os.makedirs(test_base_dir)
+
+    return test_base_dir
+
+
+def get_test_dir(test_name: str) -> str:
+    test_base_dir = get_test_base_dir()
+
+    test_dir = os.path.join(test_base_dir, test_name, "")
     if not os.path.exists(test_dir):
         os.makedirs(test_dir)
+
     return test_dir
 
 
@@ -348,13 +351,15 @@ def write_physical_properties():
 def compare_physical_results():
     original_values = read_dict_from_json('results')
     new_values = get_root_physical_props()
-    results = {}
+
+    compare_results = {}
+
     for key, value in original_values.items():
         new_value = new_values.get(key, False)
         if new_value:
-            results[key] = abs(original_values[key] - new_values[key]) < TOLERANCE
+            compare_results[key] = abs(original_values[key] - new_values[key]) < TOLERANCE
 
-    ui.messageBox(f"{json.dumps(results, indent=4)}", "Geometry Comparison - Test Results")
+    ui.messageBox(f"{json.dumps(compare_results, indent=4)}", "Geometry Comparison - Test Results")
 
 
 def get_root_physical_props() -> dict:
@@ -369,4 +374,3 @@ def get_root_physical_props() -> dict:
     }
     futil.log(f'get_root_physical_props:\n {json.dumps(property_values, indent=4)}')
     return property_values
-

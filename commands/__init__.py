@@ -2,6 +2,7 @@ from .addins import existing, folder
 from .apiExplorer import entry as api_explorer
 from .appearances import entry as appearance
 from .attributes import add, all, selected
+from .closeAll import entry as close_all
 from .commandStream import entry as command_stream
 from .data import entry as data
 from .help import api, chm, github
@@ -11,6 +12,7 @@ from .uiExplorer import entry as ui_explorer
 commands = [
     add, all, selected,
     data,
+    close_all,
     api_explorer,
     ui_explorer,
     existing, folder,

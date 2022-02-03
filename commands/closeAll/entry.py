@@ -1,43 +1,35 @@
-#  Copyright 2022 by Autodesk, Inc.
-#  Permission to use, copy, modify, and distribute this software in object code form
-#  for any purpose and without fee is hereby granted, provided that the above copyright
-#  notice appears in all copies and that both that copyright notice and the limited
-#  warranty and restricted rights notice below appear in all supporting documentation.
-#
-#  AUTODESK PROVIDES THIS PROGRAM "AS IS" AND WITH ALL FAULTS. AUTODESK SPECIFICALLY
-#  DISCLAIMS ANY IMPLIED WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR USE.
-#  AUTODESK, INC. DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
-#  UNINTERRUPTED OR ERROR FREE.
-
-import os
-
 import adsk.core
-
-from .testUtils import run_test, get_test_base_dir
-from ... import config
+import os
 from ...lib import fusion360utils as futil
-
+from ... import config
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-CMD_NAME = 'Run Test'
-CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_run'
-CMD_Description = 'Run a Test Case'
+# Set Command name and description
+CMD_NAME = 'Close All'
+CMD_Description = 'Closes all active documents, WITHOUT SAVING!'
+
+# Command ID must be unique relative to other commands in Fusion 360
+CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
+
+# Specify that the command will be promoted to the panel.
 IS_PROMOTED = True
 
-# Global variables by referencing values from /config.py
+# This is done by specifying the workspace, the tab, and the panel, and the
+# command it will be inserted beside. Not providing the command to position it
+# will insert it at the end.
 WORKSPACE_ID = config.design_workspace
 TAB_ID = config.design_tab_id
 TAB_NAME = config.design_tab_name
 
-PANEL_ID = config.test_panel_id
-PANEL_NAME = config.test_panel_name
-PANEL_AFTER = config.test_panel_after
+PANEL_ID = config.data_panel_id
+PANEL_NAME = config.data_panel_name
+PANEL_AFTER = config.data_panel_after
 
-# Resource location for command icons, here we assume a sub folder in this directory named "resources".
-ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'run', '')
+ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', '')
 
-# Holds references to event handlers
+# Local list of event handlers used to maintain a reference so
+# they are not released and garbage collected.
 local_handlers = []
 
 
@@ -95,49 +87,39 @@ def stop():
     if toolbar_tab.toolbarPanels.count == 0:
         toolbar_tab.deleteMe()
 
-
-# Function to be called when a user clicks the corresponding button in the UI.
+# Function that is called when a user clicks the corresponding button in the UI.
+# This defines the contents of the command dialog and connects to the command related events.
 def command_created(args: adsk.core.CommandCreatedEventArgs):
+    # General logging for debug.
     futil.log(f'{CMD_NAME} Command Created Event')
-    inputs = args.command.commandInputs
 
-    drop_style = adsk.core.DropDownStyles.TextListDropDownStyle
-    drop_down_input = inputs.addDropDownCommandInput('test_name', 'Test Name', drop_style)
+    # This command will auto-execute.
+    # Meaning it will not create a command dialog for user input
+    args.command.isAutoExecute = True
 
-    test_base_dir = get_test_base_dir()
-    last_time = 0
-    for file_name in os.listdir(test_base_dir):
-        full_path = os.path.join(test_base_dir, file_name)
-        if os.path.isdir(full_path):
-            test_results = os.path.join(full_path, 'results.json')
-            if os.path.exists(test_results):
-                list_item = drop_down_input.listItems.add(file_name, False)
-                this_m_time = os.path.getmtime(test_results)
-                if this_m_time > last_time:
-                    list_item.isSelected = True
-                    last_time = this_m_time
-
-    if drop_down_input.listItems.count == 0:
-        drop_down_input.listItems.add(f'No Tests Found in: {test_base_dir}', True)
-        args.command.isOKButtonVisible = False
-    # Connect to the events that are needed by this command.
+    # Add handlers for the execute and destroy events of the command
     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
     futil.add_handler(args.command.destroy, command_destroy, local_handlers=local_handlers)
 
 
-# This function will be called when the user clicks the OK button in the command dialog.
+# This event handler is called when the user clicks the OK button in the command dialog or 
+# is immediately called after the created event not command inputs were created for the dialog.
 def command_execute(args: adsk.core.CommandEventArgs):
+    # General logging for debug.
     futil.log(f'{CMD_NAME} Command Execute Event')
 
-    inputs = args.command.commandInputs
-    drop_down_input: adsk.core.DropDownCommandInput = inputs.itemById('test_name')
-    test_name = drop_down_input.selectedItem.name
+    all_docs = [document for document in app.documents]
 
-    run_test(test_name)
+    doc: adsk.core.Document
+    for doc in all_docs:
+        doc.close(False)
 
 
-# This function will be called when the user completes the command.
+# This event handler is called when the command terminates.
 def command_destroy(args: adsk.core.CommandEventArgs):
+    # General logging for debug.
+    futil.log(f'{CMD_NAME} Command Destroy Event')
+
+    # Clean up event handlers
     global local_handlers
     local_handlers = []
-    futil.log(f'{CMD_NAME} Command Destroy Event')

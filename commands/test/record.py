@@ -101,7 +101,12 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
     futil.log(f'{CMD_NAME} Command Created Event')
     inputs = args.command.commandInputs
 
-    inputs.addTextBoxCommandInput('test_name', 'Test Name', 'My Test', 1, False)
+    msg = '<b>WARNING!</b><br>This is VERY experimental!<br>Currently only supports recording 1 command per test.'
+    warning_box = inputs.addTextBoxCommandInput('warning', 'Warning', msg, 3, True)
+    warning_box.isFullWidth = True
+
+    inputs.addStringValueInput('test_name', 'Test Name', 'My Test')
+
     # Connect to the events that are needed by this command.
     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
     futil.add_handler(args.command.destroy, command_destroy, local_handlers=local_handlers)
@@ -112,9 +117,8 @@ def command_execute(args: adsk.core.CommandEventArgs):
     futil.log(f'{CMD_NAME} Command Execute Event')
 
     inputs = args.command.commandInputs
-    test_name_input: adsk.core.TextBoxCommandInput = inputs.itemById('test_name')
-
-    test_name = test_name_input.text
+    test_name_input: adsk.core.StringValueCommandInput = inputs.itemById('test_name')
+    test_name = test_name_input.value
 
     start_recording(test_name)
 

@@ -9,12 +9,11 @@
 #  AUTODESK, INC. DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
 #  UNINTERRUPTED OR ERROR FREE.
 
-import cProfile
+import os
 
 DEBUG = True
 
-# ADDIN_NAME = os.path.basename(os.path.dirname(__file__))
-ADDIN_NAME = "DEV TOOLS"
+ADDIN_NAME = os.path.basename(os.path.dirname(__file__))
 COMPANY_NAME = "Autodesk"
 
 # Name for a directory in user home to store data
