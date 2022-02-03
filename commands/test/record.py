@@ -101,9 +101,21 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
     futil.log(f'{CMD_NAME} Command Created Event')
     inputs = args.command.commandInputs
 
-    msg = '<b>WARNING!</b><br>This is VERY experimental!<br>Currently only supports recording 1 command per test.'
-    warning_box = inputs.addTextBoxCommandInput('warning', 'Warning', msg, 3, True)
+    msg_wrn = '<font color="red"><b>WARNING!</b></font><br>' \
+              'This is VERY experimental!<br>' \
+              'Currently only supports recording 1 command per test.'
+    warning_box = inputs.addTextBoxCommandInput('warning_box', 'warning_box', msg_wrn, 3, True)
     warning_box.isFullWidth = True
+
+    msg_use = '<b>USAGE</b><br>' \
+              '1. Open a model to use as a starting point. (External Designs are not supported).<br>' \
+              '2. Run this Record Command.<br>' \
+              '3. Name your test and press OK<br>' \
+              '4. Run a SINGLE COMMAND from your add-in<br>' \
+              '5. Press Stop Recording Button<br>' \
+              '6. Later you can run tests to validate expected results'
+    usage_box = inputs.addTextBoxCommandInput('usage_box', 'usage_box', msg_use, 7, True)
+    usage_box.isFullWidth = True
 
     inputs.addStringValueInput('test_name', 'Test Name', 'My Test')
 

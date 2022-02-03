@@ -125,8 +125,15 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
 
     inputs.addIntegerSpinnerCommandInput('num_lines', 'Number of Lines', 0, 1000, 7, 20)
     inputs.addBoolValueInput('strip_dirs', 'Remove directory names?', True, '', True)
+
     warning_box = inputs.addTextBoxCommandInput('warning_box', 'warning_box', WARNING_MESSAGE, 5, True)
     warning_box.isFullWidth = True
+
+    msg_info = '<font color="red"><b>Results are displayed in the TEXT COMMANDS palette</b></font><br>' \
+               'Ensure that it is visible and expanded to see your results.<br>' \
+               'You can right-click and clear the palette to make viewing easier.'
+    info_box = inputs.addTextBoxCommandInput('info_box', 'info_box', msg_info, 3, True)
+    info_box.isFullWidth = True
 
     # Connect to the events that are needed by this command.
     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
