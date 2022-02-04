@@ -26,7 +26,7 @@ def add_handler(
         *,
         name: str = None,
         local_handlers: list = None
-) -> adsk.core.EventHandler:
+):
     """Adds an event handler to the specified event.
 
     Arguments:
