@@ -10,7 +10,7 @@
 #  UNINTERRUPTED OR ERROR FREE.
 
 import sys
-from typing import Callable, Union
+from typing import Callable
 
 import adsk.core
 from .general_utils import handle_error
@@ -26,7 +26,7 @@ def add_handler(
         *,
         name: str = None,
         local_handlers: list = None
-):
+) -> adsk.core.EventHandler:
     """Adds an event handler to the specified event.
 
     Arguments:
@@ -42,6 +42,9 @@ def add_handler(
                       be cleared using the clear_handlers function. You may want
                       to maintain your own handler list so it can be managed 
                       independently for each command.
+
+    :returns:
+        The event handler that was created.  You don't often need this reference, but it can be useful in some cases.
     """   
     module = sys.modules[event.__module__]
     handler_type = module.__dict__[event.add.__annotations__['handler']]
