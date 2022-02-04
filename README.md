@@ -19,4 +19,3 @@ Written by [Patrick Rainsberry](https://www.linkedin.com/in/patrickrainsberry/) 
 See more useful [Fusion 360 Utilities](https://autodeskfusion360.github.io/)
 
 [![Analytics](https://ga-beacon.appspot.com/UA-41076924-3/Fusion360DevTools)](https://github.com/igrigorik/ga-beacon)
-
