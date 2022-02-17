@@ -13,6 +13,10 @@ import os
 
 DEBUG = True
 
+# This is very experimental and does not support all input types.
+# Should have it in a more stable place for testing soon.
+ENABLE_RECORD_COMMANDS = False
+
 ADDIN_NAME = os.path.basename(os.path.dirname(__file__))
 COMPANY_NAME = "Autodesk"
 

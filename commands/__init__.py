@@ -8,6 +8,7 @@ from .data import entry as data
 from .help import api, chm, github
 from .test import record, stop, run, performanceStart, performanceStop
 from .uiExplorer import entry as ui_explorer
+from .. import config
 
 commands = [
     add, all, selected,
@@ -17,10 +18,15 @@ commands = [
     ui_explorer,
     existing, folder,
     appearance,
-    record, stop, run, performanceStart, performanceStop,
+    performanceStart, performanceStop,
     api, chm, github,
     command_stream
 ]
+
+if config.ENABLE_RECORD_COMMANDS:
+    commands.append(record)
+    commands.append(stop)
+    commands.append(run)
 
 
 def start():
