@@ -11,7 +11,7 @@
 
 import os
 
-DEBUG = True
+DEBUG = False
 
 # This is very experimental and does not support all input types.
 # Should have it in a more stable place for testing soon.
