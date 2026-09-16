@@ -48,27 +48,36 @@ def make_node_name(name, value):
     return text
 
 
+def type_name_parts(annotation) -> list:
+    # The API has annotated its types both as 'adsk::fusion::FeatureHealthStates' and as
+    # 'adsk.fusion.FeatureHealthStates', so accept either separator.
+    if not isinstance(annotation, str):
+        return []
+    return annotation.replace('::', '.').strip(' *').split('.')
+
+
 def make_enum_node(param_name, this_object):
     # my_obj = axis  # From Selection or navigation
     # param_name = 'healthState'  # From object parameters
 
     if hasattr(this_object, f'_get_{param_name}'):
-        e_name = inspect.signature(getattr(this_object, f'_get_{param_name}')).return_annotation.split('::')
-        if e_name[0] == 'adsk':
-            e_value = inspect.getmembers(getattr(sys.modules[f'{e_name[0]}.{e_name[1]}'],
-                                         e_name[2]), lambda x: (x == getattr(this_object, param_name)))[0][0]
+        e_name = type_name_parts(inspect.signature(getattr(this_object, f'_get_{param_name}')).return_annotation)
+        if len(e_name) == 3 and e_name[0] == 'adsk':
+            enum_type = getattr(sys.modules.get(f'{e_name[0]}.{e_name[1]}'), e_name[2], None)
+            e_values = inspect.getmembers(enum_type, lambda x: (x == getattr(this_object, param_name)))
 
-            class_name = f'{e_name[0]}.{e_name[1]}.{e_name[2]}'
+            if len(e_values) > 0:
+                class_name = f'{e_name[0]}.{e_name[1]}.{e_name[2]}'
 
-            display_name = f'{class_name}.{e_value}'
+                display_name = f'{class_name}.{e_values[0][0]}'
 
-            return {
-                'text': make_node_name(param_name, display_name),
-                'children': [],
-                'type': '5-enum',
-                'param_name': param_name,
-                'clickable': False,
-            }
+                return {
+                    'text': make_node_name(param_name, display_name),
+                    'children': [],
+                    'type': '5-enum',
+                    'param_name': param_name,
+                    'clickable': False,
+                }
     return make_node(param_name, getattr(this_object, param_name))
 
 
