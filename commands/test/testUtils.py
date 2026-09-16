@@ -105,7 +105,8 @@ def stop_recording():
     futil.log(f'Stop Recording')
     clear_ui_handlers()
 
-    for command_id in create_handlers_dict.keys():
+    # clear_cmd_handlers removes entries from create_handlers_dict, so iterate over a copy.
+    for command_id in list(create_handlers_dict.keys()):
         command_def = ui.commandDefinitions.itemById(command_id)
         if command_def:
             clear_cmd_handlers(command_def)

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fusion Dev Tools - Performance Results</title>
+    <link href="static/performance.css" rel="stylesheet">
+</head>
+<body>
+
+<div class="viz-root">
+
+    <header class="app-header">
+        <div class="header-top">
+            <div class="hero">
+                <div class="hero-value" id="hero_value">—</div>
+                <div class="hero-label" id="hero_label">Total time</div>
+            </div>
+
+            <div class="kpi-row">
+                <div class="tile">
+                    <div class="tile-label">Calls</div>
+                    <div class="tile-value" id="kpi_calls">—</div>
+                    <div class="tile-note" id="kpi_calls_note"></div>
+                </div>
+                <div class="tile">
+                    <div class="tile-label">Functions</div>
+                    <div class="tile-value" id="kpi_functions">—</div>
+                    <div class="tile-note" id="kpi_functions_note"></div>
+                </div>
+                <div class="tile">
+                    <div class="tile-label">Slowest single function</div>
+                    <div class="tile-value" id="kpi_slowest">—</div>
+                    <div class="tile-note" id="kpi_slowest_note"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-row">
+            <label class="field">Capture
+                <select id="capture_select"></select>
+            </label>
+            <button id="log_text">Log as text</button>
+            <label class="field">Export
+                <select id="export_format">
+                    <option value="prof">.prof (snakeviz)</option>
+                    <option value="csv">.csv</option>
+                    <option value="json">.json</option>
+                </select>
+            </label>
+            <button id="export_button">Save…</button>
+            <span class="spacer"></span>
+            <label class="field">Editor
+                <select id="editor_select">
+                    <option value="vscode">VS Code</option>
+                    <option value="pycharm">PyCharm</option>
+                </select>
+            </label>
+            <button id="theme_toggle" title="Switch between the light and dark palette">Dark</button>
+        </div>
+
+        <section class="summary">
+            <div class="summary-heading">
+                <span>Where the time went</span>
+                <span id="summary_note"></span>
+            </div>
+            <div class="summary-bar" id="summary_bar" role="img" aria-label="Time by kind of code"></div>
+            <ul class="legend" id="summary_legend"></ul>
+        </section>
+    </header>
+
+    <nav class="tabs">
+        <button class="tab active" data-tab="hotspots">Hot spots</button>
+        <button class="tab" data-tab="calltree">Call tree</button>
+        <button class="tab" data-tab="modules">Modules</button>
+        <button class="tab" data-tab="compare">Compare</button>
+    </nav>
+
+    <div class="control-row filters" id="filter_row">
+        <input type="text" id="search" placeholder="Filter by function, file…" autocomplete="off">
+        <span class="table-only" id="table_only_controls">
+        <label class="field">Sort
+            <select id="sort_select">
+                <option value="cumtime">Cumulative time</option>
+                <option value="tottime">Total time in function</option>
+                <option value="calls">Call count</option>
+                <option value="pcalls">Primitive calls</option>
+                <option value="percall_cumtime">Cumulative per call</option>
+                <option value="percall_tottime">Total per call</option>
+                <option value="name">Function name</option>
+                <option value="module">File</option>
+            </select>
+        </label>
+        <label class="field">Top
+            <input type="number" id="limit" min="0" max="5000" step="10">
+        </label>
+        </span>
+        <div class="checks">
+            <label class="check"><input type="checkbox" id="strip_dirs"> Short file names</label>
+            <label class="check"><input type="checkbox" id="hide_imports"> Hide imports</label>
+            <label class="check"><input type="checkbox" id="hide_python"> Hide Python internals</label>
+        </div>
+        <span class="spacer"></span>
+        <span class="row-count" id="row_count"></span>
+    </div>
+
+    <main>
+        <!-- Hot spots -->
+        <section class="view active" id="view_hotspots">
+            <div class="scroller">
+                <table id="hotspot_table">
+                    <thead>
+                    <tr>
+                        <th class="text" data-sort="name">Function</th>
+                        <th data-sort="calls">Calls</th>
+                        <th data-sort="tottime">Tottime</th>
+                        <th data-sort="percall_tottime">Per call</th>
+                        <th data-sort="cumtime">Cumtime</th>
+                        <th data-sort="percall_cumtime">Per call</th>
+                        <th class="plain">Share</th>
+                        <th class="plain">%</th>
+                    </tr>
+                    </thead>
+                    <tbody id="hotspot_body"></tbody>
+                </table>
+                <div class="empty-state" id="hotspot_empty" style="display:none">
+                    <h2>Nothing matches those filters</h2>
+                    <div>Clear the search box, or turn off "Hide imports" and "Hide Python internals".</div>
+                </div>
+            </div>
+            <div class="detail empty" id="detail"></div>
+        </section>
+
+        <!-- Call tree -->
+        <section class="view" id="view_calltree">
+            <div class="view-note">
+                Built from cProfile's caller and callee totals. cProfile records a call graph
+                rather than call stacks, so a function reached from more than one caller appears
+                under each of them and the branch times are an approximation. Recursion stops at
+                the repeated call, marked <span class="recursive-flag">↻</span>.
+            </div>
+            <div class="scroller">
+                <div class="tree" id="tree_body"></div>
+            </div>
+        </section>
+
+        <!-- Modules -->
+        <section class="view" id="view_modules">
+            <div class="view-note">
+                Grouped by file. Tottime sums the functions in the file; cumtime is the largest
+                single function in it, because a caller's cumulative time already contains the
+                functions it called.
+            </div>
+            <div class="scroller">
+                <table id="module_table">
+                    <thead>
+                    <tr>
+                        <th class="text plain">File</th>
+                        <th class="plain">Functions</th>
+                        <th class="plain">Calls</th>
+                        <th class="plain">Tottime</th>
+                        <th class="plain">Widest cumtime</th>
+                        <th class="plain">Share</th>
+                        <th class="plain">%</th>
+                    </tr>
+                    </thead>
+                    <tbody id="module_body"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Compare -->
+        <section class="view" id="view_compare">
+            <div class="compare-head">
+                <label class="field">Before
+                    <select id="compare_before"></select>
+                </label>
+                <label class="field">After
+                    <select id="compare_after"></select>
+                </label>
+                <button class="primary" id="compare_run">Compare</button>
+                <input type="text" id="compare_search" placeholder="Filter by function, file…" autocomplete="off">
+                <label class="check"><input type="checkbox" id="only_changed" checked> Only rows that moved</label>
+                <span class="spacer"></span>
+                <span class="row-count" id="compare_count"></span>
+            </div>
+            <div class="compare-summary" id="compare_summary"></div>
+            <div class="scroller">
+                <table id="compare_table">
+                    <thead>
+                    <tr>
+                        <th class="text plain">Function</th>
+                        <th class="plain">Calls before</th>
+                        <th class="plain">Calls after</th>
+                        <th class="plain">Cumtime before</th>
+                        <th class="plain">Cumtime after</th>
+                        <th class="plain">Change</th>
+                    </tr>
+                    </thead>
+                    <tbody id="compare_body"></tbody>
+                </table>
+                <div class="empty-state" id="compare_empty">
+                    <h2>Compare two captures</h2>
+                    <div>Record a capture, make a change, record another, then compare them here.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="tooltip"></div>
+    <div id="toast"></div>
+</div>
+
+<script src="static/perf_model.js"></script>
+<script src="static/performance.js"></script>
+</body>
+</html>

@@ -9,29 +9,21 @@
 #  AUTODESK, INC. DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
 #  UNINTERRUPTED OR ERROR FREE.
 
-import io
-import os
-import pstats
-from pstats import SortKey
-
 import adsk.core
 import adsk.fusion
-
-from ... import config
+import os
 from ...lib import fusion360utils as futil
+from ... import config
+from .profile_utils import release_profiler, show_text_palette, start_profiler
+
 
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-CMD_NAME = 'Stop Performance Capture'
+CMD_NAME = 'Start Performance Capture'
 CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
-CMD_Description = 'Stop recording performance information and display results'
+CMD_Description = 'Start recording performance information'
 IS_PROMOTED = True
-
-WARNING_MESSAGE = '<b>Note about removing dir names:</b> <br> ' \
-                  'If you have multiple functions on the same line of the same filename, ' \
-                  'and have the same function name, then the statistics for these two entries ' \
-                  'are accumulated into a single entry.  <br>For example: <b>entry.py/start</b>'
 
 # Global variables by referencing values from /config.py
 WORKSPACE_ID = config.design_workspace
@@ -43,7 +35,7 @@ PANEL_NAME = config.test_panel_name
 PANEL_AFTER = config.test_panel_after
 
 # Resource location for command icons, here we assume a sub folder in this directory named "resources".
-ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'performanceStop', '')
+ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'start', '')
 
 # Holds references to event handlers
 local_handlers = []
@@ -80,6 +72,9 @@ def start():
 
 # Executed when add-in is stopped.
 def stop():
+    # A capture that is still running would keep the profiler slot for the whole session.
+    release_profiler()
+
     # Get the various UI elements for this command
     workspace = ui.workspaces.itemById(WORKSPACE_ID)
     panel = workspace.toolbarPanels.itemById(PANEL_ID)
@@ -106,96 +101,31 @@ def stop():
 
 # Function to be called when a user clicks the corresponding button in the UI.
 def command_created(args: adsk.core.CommandCreatedEventArgs):
-    futil.log(f'************Stop capturing performance profile information************')
-
-    if config.PROFILER is None:
-        ui.messageBox('You need to start capturing performance before you can stop.')
-        return
-
-    config.PROFILER.disable()
-    inputs = args.command.commandInputs
-
-    drop_down = inputs.addDropDownCommandInput('sort_key', 'Sort By', adsk.core.DropDownStyles.TextListDropDownStyle)
-    drop_down.listItems.add('CUMULATIVE', True)
-    drop_down.listItems.add('TIME', False)
-    drop_down.listItems.add('NAME', False)
-    drop_down.listItems.add('CALLS', False)
-    drop_down.listItems.add('NFL', False)
-    drop_down.listItems.add('FILENAME', False)
-
-    inputs.addIntegerSpinnerCommandInput('num_lines', 'Number of Lines', 0, 1000, 7, 20)
-    inputs.addBoolValueInput('strip_dirs', 'Remove directory names?', True, '', True)
-
-    warning_box = inputs.addTextBoxCommandInput('warning_box', 'warning_box', WARNING_MESSAGE, 5, True)
-    warning_box.isFullWidth = True
-
-    msg_info = '<font color="red"><b>Results are displayed in the TEXT COMMANDS palette</b></font><br>' \
-               'Ensure that it is visible and expanded to see your results.<br>' \
-               'You can right-click and clear the palette to make viewing easier.'
-    info_box = inputs.addTextBoxCommandInput('info_box', 'info_box', msg_info, 3, True)
-    info_box.isFullWidth = True
+    futil.log(f'{CMD_NAME} Command Created Event')
+    args.command.isAutoExecute = True
 
     # Connect to the events that are needed by this command.
     futil.add_handler(args.command.execute, command_execute, local_handlers=local_handlers)
     futil.add_handler(args.command.destroy, command_destroy, local_handlers=local_handlers)
-    futil.add_handler(args.command.inputChanged, command_input_changed, local_handlers=local_handlers)
-
-    print_performance_results(inputs)
 
 
 # This function will be called when the user clicks the OK button in the command dialog.
 def command_execute(args: adsk.core.CommandEventArgs):
-    inputs = args.command.commandInputs
+    try:
+        start_profiler()
+    except Exception:
+        release_profiler()
+        futil.handle_error(CMD_NAME, show_message_box=True)
+        return
 
-
-def command_input_changed(args: adsk.core.InputChangedEventArgs):
-    inputs = args.inputs
-    print_performance_results(inputs)
+    # This command auto executes, so there is no dialog to confirm the capture started.
+    # force_console writes to the TEXT COMMANDS palette even when config.DEBUG is False.
+    show_text_palette()
+    futil.log(f'************Begin capturing performance profile information************',
+              force_console=True)
 
 
 # This function will be called when the user completes the command.
 def command_destroy(args: adsk.core.CommandEventArgs):
     global local_handlers
     local_handlers = []
-
-
-def print_performance_results(inputs: adsk.core.CommandInputs):
-    futil.log(f'\n*************Performance Profile Results************\n')
-
-    strip_dirs_input: adsk.core.BoolValueCommandInput = inputs.itemById('strip_dirs')
-    sort_key_input: adsk.core.DropDownCommandInput = inputs.itemById('sort_key')
-    num_lines_input: adsk.core.IntegerSpinnerCommandInput = inputs.itemById('num_lines')
-    sort_key_selected_name = sort_key_input.selectedItem.name
-    if sort_key_selected_name == 'CUMULATIVE':
-        sort_by = SortKey.CUMULATIVE
-    elif sort_key_selected_name == 'TIME':
-        sort_by = SortKey.TIME
-    elif sort_key_selected_name == 'NAME':
-        sort_by = SortKey.NAME
-    elif sort_key_selected_name == 'CALLS':
-        sort_by = SortKey.CALLS
-    elif sort_key_selected_name == 'NFL':
-        sort_by = SortKey.NFL
-    elif sort_key_selected_name == 'FILENAME':
-        sort_by = SortKey.FILENAME
-    else:
-        sort_by = SortKey.CUMULATIVE
-
-    # TODO add save to file
-    s = io.StringIO()
-    p_stats = pstats.Stats(config.PROFILER, stream=s)
-
-    if strip_dirs_input.value:
-        p_stats.strip_dirs()
-
-    p_stats.sort_stats(sort_by)
-    if num_lines_input.value > 0:
-        p_stats.print_stats(num_lines_input.value)
-    else:
-        p_stats.print_stats()
-
-    textPalette = ui.palettes.itemById('TextCommands')
-    if not textPalette.isVisible:
-        textPalette.isVisible = True
-
-    futil.log(s.getvalue())

@@ -6,7 +6,8 @@ from .closeAll import entry as close_all
 from .commandStream import entry as command_stream
 from .data import entry as data
 from .help import api, chm, github
-from .test import record, stop, run, performanceStart, performanceStop
+from .performance import start as performance_start, stop as performance_stop
+from .test import record, stop as test_stop, run
 from .uiExplorer import entry as ui_explorer
 from .. import config
 
@@ -18,14 +19,14 @@ commands = [
     ui_explorer,
     existing, folder,
     appearance,
-    performanceStart, performanceStop,
+    performance_start, performance_stop,
     api, chm, github,
     command_stream
 ]
 
 if config.ENABLE_RECORD_COMMANDS:
     commands.append(record)
-    commands.append(stop)
+    commands.append(test_stop)
     commands.append(run)
 
 
