@@ -5,3 +5,6 @@ __pycache__/
 .DS_Store
 venv
 .env
+
+# Capture fixtures dropped in to work on the performance palette outside Fusion
+commands/performance/resources/html/static/fixture*.json

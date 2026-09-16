@@ -9,21 +9,23 @@
 #  AUTODESK, INC. DOES NOT WARRANT THAT THE OPERATION OF THE PROGRAM WILL BE
 #  UNINTERRUPTED OR ERROR FREE.
 
-import cProfile
+import os
 
 import adsk.core
 import adsk.fusion
-import os
-from ...lib import fusion360utils as futil
-from ... import config
 
+from . import palette
+from . import report
+from .profile_utils import release_profiler
+from ... import config
+from ...lib import fusion360utils as futil
 
 app = adsk.core.Application.get()
 ui = app.userInterface
 
-CMD_NAME = 'Start Performance Capture'
+CMD_NAME = 'Stop Performance Capture'
 CMD_ID = f'{config.COMPANY_NAME}_{config.ADDIN_NAME}_{CMD_NAME}'
-CMD_Description = 'Start recording performance information'
+CMD_Description = 'Stop recording performance information and show the results palette'
 IS_PROMOTED = True
 
 # Global variables by referencing values from /config.py
@@ -36,7 +38,7 @@ PANEL_NAME = config.test_panel_name
 PANEL_AFTER = config.test_panel_after
 
 # Resource location for command icons, here we assume a sub folder in this directory named "resources".
-ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'performanceStart', '')
+ICON_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'resources', 'stop', '')
 
 # Holds references to event handlers
 local_handlers = []
@@ -73,6 +75,10 @@ def start():
 
 # Executed when add-in is stopped.
 def stop():
+    # A capture that is still running would keep the profiler slot for the whole session.
+    release_profiler()
+    palette.close()
+
     # Get the various UI elements for this command
     workspace = ui.workspaces.itemById(WORKSPACE_ID)
     panel = workspace.toolbarPanels.itemById(PANEL_ID)
@@ -99,7 +105,15 @@ def stop():
 
 # Function to be called when a user clicks the corresponding button in the UI.
 def command_created(args: adsk.core.CommandCreatedEventArgs):
-    futil.log(f'{CMD_NAME} Command Created Event')
+    futil.log(f'************Stop capturing performance profile information************')
+
+    if config.PROFILER is None:
+        ui.messageBox('You need to start capturing performance before you can stop.')
+        args.command.isAutoExecute = False
+        args.command.isOKButtonVisible = False
+        return
+
+    # Every option now lives in the results palette, so there is no dialog to fill in.
     args.command.isAutoExecute = True
 
     # Connect to the events that are needed by this command.
@@ -109,9 +123,25 @@ def command_created(args: adsk.core.CommandCreatedEventArgs):
 
 # This function will be called when the user clicks the OK button in the command dialog.
 def command_execute(args: adsk.core.CommandEventArgs):
-    futil.log(f'************Begin capturing performance profile information************')
-    config.PROFILER = cProfile.Profile()
-    config.PROFILER.enable()
+    try:
+        capture = report.take_snapshot(config.PROFILER)
+    except TypeError:
+        # pstats raises a TypeError when the capture recorded no calls at all.
+        release_profiler()
+        futil.log('No performance profile information was captured.', force_console=True)
+        ui.messageBox('No performance profile information was captured.\n\n'
+                      'Start a capture, use the commands you want to measure, then stop it.')
+        return
+
+    # The capture is snapshotted, so the profiler itself is no longer needed and its
+    # sys.monitoring slot should go back so the next capture can start.
+    release_profiler()
+
+    futil.log(f'{capture["label"]}: {capture["total_time"]:.3f} s, '
+              f'{capture["total_calls"]} calls in {capture["function_count"]} functions',
+              force_console=True)
+
+    palette.show(capture)
 
 
 # This function will be called when the user completes the command.

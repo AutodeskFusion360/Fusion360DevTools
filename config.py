@@ -69,6 +69,9 @@ appearance_palette_id = f'{ADDIN_NAME}_appearance_palette'
 command_stream_palette_name = 'Fusion 360 Dev Tools - Command Stream'
 command_stream_palette_id = f'{ADDIN_NAME}_command_stream_palette'
 
+performance_palette_name = 'Fusion 360 Dev Tools - Performance Results'
+performance_palette_id = f'{ADDIN_NAME}_performance_palette'
+
 # Reference for use in some commands
 all_workspace_names = [
     'FusionSolidEnvironment', 'GenerativeEnvironment', 'PCBEnvironment', 'PCB3DEnvironment', 'Package3DEnvironment',
