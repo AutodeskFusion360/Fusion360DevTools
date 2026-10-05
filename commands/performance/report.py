@@ -25,7 +25,8 @@ import os
 import pstats
 import sys
 
-# How many captures to keep so they can be compared against each other.
+# How many captures to keep so they can be compared against each other.  The same
+# number are kept on disk, so they are still there after Fusion restarts.
 HISTORY_LIMIT = 8
 
 # A long capture can hold thousands of functions, which makes for a payload the palette
@@ -33,7 +34,7 @@ HISTORY_LIMIT = 8
 # palette is sent; text reports and exports still use the whole capture.
 MAX_PALETTE_FUNCTIONS = 1500
 
-# Captures made this session, newest last.
+# Captures made this session and saved from earlier ones, newest last.
 captures = []
 
 # Never reused, so a capture id stays unique even after the history is trimmed.
@@ -42,6 +43,11 @@ _capture_count = 0
 # Where the add-in itself lives, used to tell its own overhead apart from the code
 # being measured.  report.py is <add-in>/commands/performance/report.py.
 ADDIN_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Saved captures live next to the recorded test cases, in ~/<add-in>/.  Each one is a
+# .json file with what the palette needs and a .prof file with the raw pstats data,
+# which text reports and .prof exports are built from.
+CAPTURE_DIR = os.path.join(os.path.expanduser('~'), os.path.basename(ADDIN_DIR), 'PERFORMANCE')
 
 # Category ids are also palette color slots, so the order here is the legend order.
 CATEGORIES = [
@@ -157,10 +163,12 @@ def take_snapshot(profiler, label: str = None) -> dict:
     roots.sort(key=lambda function: -function['cumtime'])
 
     _capture_count += 1
+    created = datetime.datetime.now()
     capture = {
         'id': f'capture_{_capture_count}',
         'label': label or f'Capture {_capture_count}',
-        'created': datetime.datetime.now().strftime('%H:%M:%S'),
+        'created': created.strftime('%H:%M:%S'),
+        'created_at': created.isoformat(timespec='seconds'),
         'total_time': _time(total_time),
         'total_calls': stats.total_calls,
         'primitive_calls': stats.prim_calls,
@@ -208,11 +216,102 @@ def _edges(edge_stats: dict, ids: dict) -> list:
     return edges
 
 
+def _capture_number(capture_id: str) -> int:
+    try:
+        return int(capture_id.rsplit('_', 1)[1])
+    except (IndexError, ValueError):
+        return 0
+
+
+def _write_atomically(file_path: str, data: bytes):
+    """Writes through a temporary file, so a crash mid-write never leaves half a capture."""
+    temporary_path = file_path + '.tmp'
+    with open(temporary_path, 'wb') as output_file:
+        output_file.write(data)
+    os.replace(temporary_path, file_path)
+
+
+def save_history():
+    """Writes any capture not yet on disk and removes the ones trimmed from the history.
+
+    Raises an OSError if the capture folder cannot be written.
+    """
+    os.makedirs(CAPTURE_DIR, exist_ok=True)
+    kept = set()
+
+    for capture in captures:
+        kept.add(capture['id'])
+        json_path = os.path.join(CAPTURE_DIR, capture['id'] + '.json')
+        if os.path.exists(json_path):
+            continue
+
+        # The .prof goes first: a .json without its .prof is skipped when loading.
+        _write_atomically(os.path.join(CAPTURE_DIR, capture['id'] + '.prof'),
+                          marshal.dumps(capture['_raw_stats']))
+        data = {key: value for key, value in capture.items() if not key.startswith('_')}
+        _write_atomically(json_path, json.dumps(data, separators=(',', ':')).encode('utf-8'))
+
+    for file_name in os.listdir(CAPTURE_DIR):
+        capture_id, extension = os.path.splitext(file_name)
+        if extension in ('.json', '.prof', '.tmp') and capture_id not in kept:
+            os.remove(os.path.join(CAPTURE_DIR, file_name))
+
+
+def load_saved() -> list:
+    """Reads the captures saved by earlier sessions into the history.
+
+    Returns a description of each saved file that could not be read; those are skipped.
+    """
+    global _capture_count
+
+    if not os.path.isdir(CAPTURE_DIR):
+        return []
+
+    problems = []
+    loaded = []
+    saved_ids = sorted({os.path.splitext(name)[0] for name in os.listdir(CAPTURE_DIR) if name.endswith('.json')},
+                       key=_capture_number)
+
+    for capture_id in saved_ids[-HISTORY_LIMIT:]:
+        json_path = os.path.join(CAPTURE_DIR, capture_id + '.json')
+        try:
+            with open(json_path, 'r', encoding='utf-8') as input_file:
+                capture = json.load(input_file)
+            with open(os.path.join(CAPTURE_DIR, capture_id + '.prof'), 'rb') as input_file:
+                capture['_raw_stats'] = marshal.load(input_file)
+
+            # The time alone is ambiguous once a capture is from another day.
+            created = datetime.datetime.fromisoformat(capture['created_at'])
+            if created.date() != datetime.date.today():
+                capture['created'] = created.strftime('%b %d %H:%M')
+        except (OSError, ValueError, EOFError, TypeError, KeyError) as error:
+            problems.append(f'{json_path}: {error!r}')
+            continue
+
+        loaded.append(capture)
+
+    # Anything captured before the load (there should not be any) stays newest.
+    known = {capture['id'] for capture in captures}
+    captures[:0] = [capture for capture in loaded if capture['id'] not in known]
+    del captures[:-HISTORY_LIMIT]
+
+    # Carry on numbering after the saved captures, so ids and file names never collide.
+    if saved_ids:
+        _capture_count = max(_capture_count, _capture_number(saved_ids[-1]))
+
+    return problems
+
+
 def capture_by_id(capture_id: str):
     for capture in captures:
         if capture['id'] == capture_id:
             return capture
     return None
+
+
+def latest():
+    """The most recent capture, or None if nothing has been captured this session."""
+    return captures[-1] if captures else None
 
 
 def palette_payload(capture: dict) -> dict:

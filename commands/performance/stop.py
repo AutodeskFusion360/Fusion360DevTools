@@ -10,6 +10,7 @@
 #  UNINTERRUPTED OR ERROR FREE.
 
 import os
+import traceback
 
 import adsk.core
 import adsk.fusion
@@ -136,6 +137,13 @@ def command_execute(args: adsk.core.CommandEventArgs):
     # The capture is snapshotted, so the profiler itself is no longer needed and its
     # sys.monitoring slot should go back so the next capture can start.
     release_profiler()
+
+    try:
+        report.save_history()
+    except OSError:
+        # The capture is still in this session's history, it just will not outlive it.
+        futil.log(f'Could not save the capture to {report.CAPTURE_DIR}:\n{traceback.format_exc()}',
+                  force_console=True)
 
     futil.log(f'{capture["label"]}: {capture["total_time"]:.3f} s, '
               f'{capture["total_calls"]} calls in {capture["function_count"]} functions',

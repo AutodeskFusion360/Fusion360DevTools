@@ -42,6 +42,7 @@ Attributes are invisible, so these make them visible while you are developing wi
 | --- | --- |
 | Start Performance Capture | Starts a `cProfile` capture |
 | Stop Performance Capture | Ends the capture and opens the results palette |
+| Show Performance Results | Reopens the results palette on the latest capture |
 | Record Test / Run Test / Stop Recording | Records a command and its inputs, then replays it and compares the resulting geometry. Very experimental, so it is off by default — set `ENABLE_RECORD_COMMANDS = True` in `config.py` to show these |
 
 ## ADD-INS
@@ -58,6 +59,12 @@ Links to the online API documentation, the offline CHM download, and the Fusion 
    since there is no dialog to show.
 2. Use the commands you want to measure.
 3. **Stop Performance Capture** snapshots the capture and opens the results palette.
+
+**Show Performance Results** brings the palette back after it has been closed. It opens on the
+latest capture, and the capture list at the top of the palette holds the last 8 captures.
+Those are saved to `~/Fusion360DevTools/PERFORMANCE/` as each capture stops, so they are still
+there after Fusion restarts; older ones are deleted as new ones come in. Export a capture if
+you want to keep it for good.
 
 The palette has four views over the same capture, all driven by the filters above them:
 

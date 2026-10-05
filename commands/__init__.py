@@ -6,7 +6,7 @@ from .closeAll import entry as close_all
 from .commandStream import entry as command_stream
 from .data import entry as data
 from .help import api, chm, github
-from .performance import start as performance_start, stop as performance_stop
+from .performance import start as performance_start, stop as performance_stop, show as performance_show
 from .test import record, stop as test_stop, run
 from .uiExplorer import entry as ui_explorer
 from .. import config
@@ -19,7 +19,7 @@ commands = [
     ui_explorer,
     existing, folder,
     appearance,
-    performance_start, performance_stop,
+    performance_start, performance_stop, performance_show,
     api, chm, github,
     command_stream
 ]
